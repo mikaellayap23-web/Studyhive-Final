@@ -2,10 +2,12 @@
 
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\AssessmentController;
+use App\Http\Controllers\AuditTrailController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\ModuleController;
+use App\Http\Controllers\ModuleProgressController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -36,6 +38,7 @@ Route::get('/announcements', [AnnouncementController::class, 'index'])->name('an
 Route::post('/announcements', [AnnouncementController::class, 'store'])->name('announcements.store')->middleware('auth');
 Route::put('/announcements/{announcement}', [AnnouncementController::class, 'update'])->name('announcements.update')->middleware('auth');
 Route::delete('/announcements/{announcement}', [AnnouncementController::class, 'destroy'])->name('announcements.destroy')->middleware('auth');
+Route::post('/announcements/{announcement}/mark-read', [AnnouncementController::class, 'markAsRead'])->name('announcements.mark-read')->middleware('auth');
 
 // Modules Routes
 Route::get('/modules', [ModuleController::class, 'index'])->name('modules.index')->middleware('auth');
@@ -65,9 +68,23 @@ Route::middleware(['auth'])->group(function () {
 // Single module view (must be last to avoid catching other routes)
 Route::get('/modules/{module}', [ModuleController::class, 'show'])->name('modules.show')->middleware('auth');
 
+// Module Progress Tracking Routes (AJAX)
+Route::middleware(['auth'])->group(function () {
+    Route::post('/modules/{module}/progress/pdf', [ModuleProgressController::class, 'trackPdfPage'])->name('modules.progress.pdf');
+    Route::get('/modules/{module}/progress', [ModuleProgressController::class, 'getProgress'])->name('modules.progress');
+});
+
 // Assessment Routes
 Route::middleware(['auth'])->group(function () {
-    // Student assessment routes
+    // Assessment CRUD (Admin/Teacher)
+    Route::get('/assessments', [AssessmentController::class, 'index'])->name('assessments.index');
+    Route::get('/assessments/create', [AssessmentController::class, 'create'])->name('assessments.create');
+    Route::post('/assessments', [AssessmentController::class, 'store'])->name('assessments.store');
+    Route::get('/assessments/{assessment}/edit', [AssessmentController::class, 'edit'])->name('assessments.edit');
+    Route::put('/assessments/{assessment}', [AssessmentController::class, 'update'])->name('assessments.update');
+    Route::delete('/assessments/{assessment}', [AssessmentController::class, 'destroy'])->name('assessments.destroy');
+
+    // Student assessment routes (must be after CRUD routes)
     Route::get('/assessments/{assessment}/take', [AssessmentController::class, 'take'])->name('assessments.take');
     Route::post('/assessments/{assessment}/submit', [AssessmentController::class, 'submit'])->name('assessments.submit');
     Route::get('/assessments/submissions/{submission}', [AssessmentController::class, 'results'])->name('assessments.results');
@@ -83,4 +100,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::put('/users/{user}/approve', [UserController::class, 'approve'])->name('users.approve');
     Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
     Route::delete('/users/{user}/reject', [UserController::class, 'reject'])->name('users.reject');
+
+    // Audit Trail
+    Route::get('/audit-trail', [AuditTrailController::class, 'index'])->name('audit-trail');
 });

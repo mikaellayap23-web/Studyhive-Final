@@ -129,7 +129,7 @@ main {
 .cards-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 1.25rem;
+    gap: 1.5rem;
     margin-top: 1.5rem;
 }
 
@@ -138,7 +138,7 @@ main {
     background-color: #ffffff;
     border: 1px solid #e2e8e4;
     border-radius: 8px;
-    padding: 1.25rem;
+    padding: 1.5rem;
     transition: box-shadow 0.2s ease;
 }
 
@@ -147,19 +147,19 @@ main {
 }
 
 .card-icon {
-    width: 40px;
-    height: 40px;
+    width: 48px;
+    height: 48px;
     background-color: #e8f5e9;
     border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.875rem;
 }
 
 .card-icon svg {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     stroke: #2d5a3d;
 }
 
@@ -167,18 +167,18 @@ main {
     font-size: 0.9rem;
     font-weight: 600;
     color: #2d3748;
-    margin-bottom: 0.35rem;
+    margin-bottom: 0.375rem;
 }
 
 .card p {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     color: #4a5568;
     line-height: 1.5;
 }
 
 /* Section Title */
 .section-title {
-    font-size: 1.1rem;
+    font-size: 1.125rem;
     font-weight: 600;
     color: #2d3748;
     margin-bottom: 1rem;
@@ -190,7 +190,7 @@ main {
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 1.25rem;
+    gap: 1.5rem;
     margin-bottom: 2rem;
 }
 
@@ -198,7 +198,7 @@ main {
     background-color: #ffffff;
     border: 1px solid #e2e8e4;
     border-radius: 8px;
-    padding: 1.25rem;
+    padding: 1.5rem;
     transition: box-shadow 0.2s ease;
 }
 
@@ -210,12 +210,12 @@ main {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.875rem;
 }
 
 .stat-icon {
-    width: 40px;
-    height: 40px;
+    width: 48px;
+    height: 48px;
     background-color: #e8f5e9;
     border-radius: 8px;
     display: flex;
@@ -224,8 +224,8 @@ main {
 }
 
 .stat-icon svg {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     stroke: #2d5a3d;
 }
 
@@ -238,14 +238,14 @@ main {
 }
 
 .stat-value {
-    font-size: 1.75rem;
+    font-size: 1.875rem;
     font-weight: 700;
     color: #2d3748;
     line-height: 1;
 }
 
 .stat-change {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     color: #4a7c59;
     margin-top: 0.5rem;
 }

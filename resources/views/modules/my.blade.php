@@ -8,6 +8,42 @@
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700" rel="stylesheet" />
     <link rel="stylesheet" href="{{ asset('css/sidebar.css') }}">
     <link rel="stylesheet" href="{{ asset('css/modules.css') }}">
+    <style>
+        .progress-bar-container {
+            margin-top: 0.75rem;
+            padding: 0.5rem;
+            background: #f8faf9;
+            border-radius: 6px;
+        }
+        .progress-bar-wrapper {
+            height: 8px;
+            background-color: #e2e8e4;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #718096;
+            margin-bottom: 0.25rem;
+        }
+        .completion-badge {
+            display: inline-block;
+            background: #48bb78;
+            color: white;
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+    </style>
 </head>
 <body>
     <!-- Sidebar -->
@@ -34,6 +70,18 @@
                     </div>
                 @endif
 
+                @if(session('error'))
+                    <div class="alert alert-error">
+                        {{ session('error') }}
+                    </div>
+                @endif
+
+                @if(session('info'))
+                    <div class="alert alert-info">
+                        {{ session('info') }}
+                    </div>
+                @endif
+
                 @if($errors->any())
                     <div class="alert alert-error">
                         @foreach($errors->all() as $error)
@@ -48,10 +96,33 @@
                     <p style="color: #718096; font-size: 0.9rem;">Access your enrolled learning modules</p>
                 </div>
 
+                <!-- Filters -->
+                <form method="GET" action="{{ route('modules.my') }}" style="display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: flex-end;">
+                    <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
+                        <label for="filter_search" style="font-size: 0.8rem; margin-bottom: 0.25rem;">Search</label>
+                        <input type="text" id="filter_search" name="search" value="{{ request('search') }}" placeholder="Search by title" style="padding: 0.5rem 0.75rem; border: 1px solid #dfe3e8; border-radius: 6px; font-size: 0.875rem; font-family: inherit; background-color: #fafbfc;">
+                    </div>
+                    <button type="submit" class="btn btn-secondary btn-sm" style="align-self: flex-end;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 0.25rem;">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="m21 21-4.3-4.3"/>
+                        </svg>
+                        Filter
+                    </button>
+                    @if(request('search'))
+                        <a href="{{ route('modules.my') }}" class="btn btn-secondary btn-sm" style="align-self: flex-end;">Clear</a>
+                    @endif
+                </form>
+
                 <!-- Modules Grid -->
                 <div class="modules-grid">
                     @forelse($modules as $module)
                         <div class="module-card">
+                            @if($module->image_path)
+                                <div class="module-image">
+                                    <img src="{{ asset('storage/' . $module->image_path) }}" alt="{{ $module->title }}">
+                                </div>
+                            @endif
                             <div class="module-header">
                                 <div>
                                     <h3 class="module-title">{{ $module->title }}</h3>
@@ -86,6 +157,27 @@
                             </div>
                             <div class="module-body">
                                 <p class="module-description">{{ Str::limit($module->description, 100) }}</p>
+                                
+                                <!-- Progress Bar -->
+                                <div class="progress-bar-container">
+                                    <div class="progress-text">
+                                        <span>Progress</span>
+                                        <span>{{ $module->progress }}%</span>
+                                    </div>
+                                    <div class="progress-bar-wrapper">
+                                        <div class="progress-bar-fill" style="width: {{ $module->progress }}%;"></div>
+                                    </div>
+                                    @if($module->pdf_completed)
+                                        <span class="completion-badge">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 0.25rem;">
+                                                <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                                                <polyline points="22 4 12 14.01 9 11.01"/>
+                                            </svg>
+                                            Material Viewed
+                                        </span>
+                                    @endif
+                                </div>
+                                
                                 <div class="module-footer">
                                     <span class="module-date">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle;">

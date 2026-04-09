@@ -40,6 +40,12 @@
                     </div>
                 @endif
 
+                @if(session('error'))
+                    <div class="alert alert-error">
+                        {{ session('error') }}
+                    </div>
+                @endif
+
                 @if($errors->any())
                     <div class="alert alert-error">
                         @foreach($errors->all() as $error)
@@ -54,10 +60,47 @@
                     <p style="color: #718096; font-size: 0.9rem;">Explore and enroll in available learning modules</p>
                 </div>
 
+                <!-- Filters -->
+                <form method="GET" action="{{ route('modules.all') }}" style="display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: flex-end;">
+                    <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
+                        <label for="filter_search" style="font-size: 0.8rem; margin-bottom: 0.25rem;">Search</label>
+                        <input type="text" id="filter_search" name="search" value="{{ request('search') }}" placeholder="Search by title" style="padding: 0.5rem 0.75rem; border: 1px solid #dfe3e8; border-radius: 6px; font-size: 0.875rem; font-family: inherit; background-color: #fafbfc;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
+                        <label for="filter_teacher" style="font-size: 0.8rem; margin-bottom: 0.25rem;">Teacher</label>
+                        <select id="filter_teacher" name="teacher" style="padding: 0.5rem 0.75rem; border: 1px solid #dfe3e8; border-radius: 6px; font-size: 0.875rem; font-family: inherit; background-color: #fafbfc;">
+                            <option value="">All Teachers</option>
+                            @php
+                                $teachers = \App\Models\User::where('role', 'teacher')->orderBy('first_name')->get();
+                            @endphp
+                            @foreach($teachers as $teacher)
+                                <option value="{{ $teacher->id }}" {{ request('teacher') == $teacher->id ? 'selected' : '' }}>
+                                    {{ $teacher->first_name }} {{ $teacher->last_name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-secondary btn-sm" style="align-self: flex-end;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 0.25rem;">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="m21 21-4.3-4.3"/>
+                        </svg>
+                        Filter
+                    </button>
+                    @if(request('search') || request('teacher'))
+                        <a href="{{ route('modules.all') }}" class="btn btn-secondary btn-sm" style="align-self: flex-end;">Clear</a>
+                    @endif
+                </form>
+
                 <!-- Modules Grid -->
                 <div class="modules-grid">
                     @forelse($modules as $module)
                         <div class="module-card">
+                            @if($module->image_path)
+                                <div class="module-image">
+                                    <img src="{{ asset('storage/' . $module->image_path) }}" alt="{{ $module->title }}">
+                                </div>
+                            @endif
                             <div class="module-header">
                                 <div>
                                     <h3 class="module-title">{{ $module->title }}</h3>
@@ -89,6 +132,11 @@
                                                 Enrolled
                                             </span>
                                         @endif
+                                        @if($module->is_completed)
+                                            <span class="enrolled-badge" style="background-color: #16a34a; color: white; font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 9999px; font-weight: 600;">
+                                                Completed
+                                            </span>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -112,7 +160,7 @@
                                             </svg>
                                             Preview
                                         </a>
-                                        @if(!$module->is_enrolled)
+                                        @if(!$module->is_enrolled && !$module->is_completed)
                                             <form action="{{ route('modules.enroll', $module->id) }}" method="POST" style="display: inline;">
                                                 @csrf
                                                 <button type="submit" class="btn btn-primary btn-sm">
@@ -125,6 +173,14 @@
                                                     Enroll
                                                 </button>
                                             </form>
+                                        @elseif($module->is_completed)
+                                            <span style="color: #16a34a; font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 0.25rem;">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                                                    <polyline points="22 4 12 14.01 9 11.01"/>
+                                                </svg>
+                                                Completed
+                                            </span>
                                         @else
                                             <form action="{{ route('modules.unenroll', $module->id) }}" method="POST" style="display: inline;">
                                                 @csrf

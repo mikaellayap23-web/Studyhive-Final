@@ -8,6 +8,7 @@
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700" rel="stylesheet" />
     <link rel="stylesheet" href="{{ asset('css/sidebar.css') }}">
     <link rel="stylesheet" href="{{ asset('css/modules.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <style>
         .module-detail {
             max-width: 900px;
@@ -95,6 +96,81 @@
             background-color: #feebc8;
             color: #744210;
         }
+        .pdf-viewer-container {
+            position: relative;
+            width: 100%;
+            height: 700px;
+            border: 1px solid #e2e8e4;
+            border-radius: 8px;
+            overflow: auto;
+            background: #f8faf9;
+        }
+        .pdf-pages-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            gap: 20px;
+        }
+        .pdf-page-wrapper {
+            position: relative;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            padding: 10px;
+            max-width: 100%;
+        }
+        .pdf-page-canvas {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .page-viewed-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #28a745;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        .pdf-progress-container {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8faf9;
+            border-radius: 8px;
+        }
+        .pdf-progress-text {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        .pdf-progress-bar {
+            height: 8px;
+            background-color: #e2e8e4;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .pdf-progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+        .progress-card {
+            background: white;
+            border: 1px solid #e2e8e4;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
     </style>
 </head>
 <body>
@@ -161,6 +237,14 @@
                                         </svg>
                                         Enrolled
                                     </span>
+                                @elseif($moduleCompleted)
+                                    <span style="color: #16a34a; font-size: 0.875rem; font-weight: 600; display: flex; align-items: center; gap: 0.25rem;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                                            <polyline points="22 4 12 14.01 9 11.01"/>
+                                        </svg>
+                                        Completed
+                                    </span>
                                 @else
                                     <form action="{{ route('modules.enroll', $module->id) }}" method="POST" style="display: inline;">
                                         @csrf
@@ -182,7 +266,7 @@
                         </div>
                     </div>
 
-                    @if(auth()->user()->role === 'student' && !$isEnrolled)
+                    @if(auth()->user()->role === 'student' && !$isEnrolled && !$moduleCompleted)
                         <!-- Enrollment Notice for Non-Enrolled Students -->
                         <div class="enrollment-notice">
                             <h3>
@@ -200,6 +284,18 @@
                                     Enroll Now
                                 </button>
                             </form>
+                        </div>
+                    @elseif(auth()->user()->role === 'student' && $moduleCompleted)
+                        <!-- Completed Module Notice -->
+                        <div class="enrollment-notice" style="background: #f0fdf4; border-color: #bbf7d0;">
+                            <h3 style="color: #166534;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
+                                    <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                                    <polyline points="22 4 12 14.01 9 11.01"/>
+                                </svg>
+                                Module Completed
+                            </h3>
+                            <p style="color: #15803d;">You have already completed this module. You can view the module details but materials and assessments are no longer accessible.</p>
                         </div>
                     @endif
 
@@ -230,17 +326,16 @@
                         </div>
                     </div>
 
-                    <!-- File Download -->
+                    <!-- Module Materials / PDF Viewer -->
                     @if($module->file_path)
                         <div class="module-detail-body">
                             <div class="module-detail-section">
                                 <h3>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
-                                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-                                        <polyline points="7 10 12 15 17 10"/>
-                                        <line x1="12" y1="15" x2="12" y2="3"/>
+                                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                                        <polyline points="14 2 14 8 20 8"/>
                                     </svg>
-                                    Downloadable Resources
+                                    Module Materials
                                 </h3>
                                 @if(auth()->user()->role === 'student' && !$isEnrolled)
                                     <p style="color: #718096; font-size: 0.875rem;">
@@ -248,17 +343,47 @@
                                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                                             <path d="M7 11V7a5 5 0 0110 0v4"/>
                                         </svg>
-                                        File downloads are available after enrollment
+                                        Materials are available after enrollment
                                     </p>
-                                @else
-                                    <a href="{{ asset('storage/' . $module->file_path) }}" class="btn btn-primary" download>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
-                                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-                                            <polyline points="7 10 12 15 17 10"/>
-                                            <line x1="12" y1="15" x2="12" y2="3"/>
+                                @elseif(auth()->user()->role === 'student' && $moduleCompleted)
+                                    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 1.5rem; text-align: center;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: #16a34a; margin: 0 auto 0.75rem;">
+                                            <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                                            <polyline points="22 4 12 14.01 9 11.01"/>
                                         </svg>
-                                        Download {{ basename($module->file_path) }}
-                                    </a>
+                                        <h4 style="margin: 0 0 0.5rem 0; color: #166534;">Module Completed</h4>
+                                        <p style="color: #15803d; font-size: 0.875rem;">You have completed this module. Materials are no longer accessible.</p>
+                                    </div>
+                                @elseif(auth()->user()->role === 'student' && $isEnrolled)
+                                    @php
+                                        $fileExt = strtolower(pathinfo($module->file_path, PATHINFO_EXTENSION));
+                                        $isPdf = $fileExt === 'pdf';
+                                    @endphp
+
+                                    @if($isPdf)
+                                        <!-- PDF Viewer with Progress Tracking -->
+                                        <div class="pdf-viewer-container" id="pdfViewerContainer">
+                                            <div id="pdfPagesContainer" class="pdf-pages-container"></div>
+                                        </div>
+
+                                        <div class="pdf-progress-container" id="pdfProgressContainer">
+                                            <div class="pdf-progress-text">
+                                                <span>PDF Progress</span>
+                                                <span id="pdfProgressText">0%</span>
+                                            </div>
+                                            <div class="pdf-progress-bar">
+                                                <div class="pdf-progress-fill" id="pdfProgressFill" style="width: 0%;"></div>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <p style="color: #718096; font-size: 0.875rem;">
+                                            This module has materials in a format that is not yet supported. Please contact your teacher for access.
+                                        </p>
+                                    @endif
+                                @else
+                                    <p style="color: #718096; font-size: 0.875rem;">
+                                        File: {{ basename($module->file_path) }}
+                                    </p>
                                 @endif
                             </div>
                         </div>
@@ -279,8 +404,18 @@
                                     </svg>
                                     Assessment
                                 </h3>
-                                
-                                @if(auth()->user()->role === 'student' && !$isEnrolled)
+
+                                @if(auth()->user()->role === 'student' && $moduleCompleted)
+                                    {{-- Completed module - hide assessment --}}
+                                    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 1.5rem; text-align: center;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: #16a34a; margin: 0 auto 0.75rem;">
+                                            <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                                            <polyline points="22 4 12 14.01 9 11.01"/>
+                                        </svg>
+                                        <h4 style="margin: 0 0 0.5rem 0; color: #166534;">Module Completed</h4>
+                                        <p style="color: #15803d; font-size: 0.875rem;">You have already completed this assessment. Results are no longer accessible.</p>
+                                    </div>
+                                @elseif(auth()->user()->role === 'student' && !$isEnrolled)
                                     {{-- Show lock message for non-enrolled students --}}
                                     <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.5rem; text-align: center;">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: #94a3b8; margin: 0 auto 1rem;">
@@ -304,8 +439,10 @@
                                             $canTake = $assessment->canUserTake(auth()->user());
                                             $remainingAttempts = $assessment->getRemainingAttempts(auth()->user());
                                             $hasUnlimitedAttempts = $remainingAttempts === -1;
+                                            $progressPercent = $moduleProgress ? $moduleProgress->progress : 0;
+                                            $canAccessAssessment = $progressPercent >= 100;
                                         @endphp
-                                        
+
                                         @if($latestSubmission && !$canTake)
                                             {{-- Student used all attempts - show best result --}}
                                             @php
@@ -322,6 +459,17 @@
                                                     View Results
                                                 </a>
                                             </div>
+                                        @elseif(!$canAccessAssessment)
+                                            {{-- Progress not 100% - lock assessment --}}
+                                            <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 1.5rem; text-align: center;">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: #d97706; margin: 0 auto 0.75rem;">
+                                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                                    <path d="M7 11V7a5 5 0 0110 0v4"/>
+                                                </svg>
+                                                <h4 style="margin: 0 0 0.5rem 0; color: #92400e;">Assessment Locked</h4>
+                                                <p style="color: #78350f; font-size: 0.875rem; margin-bottom: 0.5rem;">Complete the module materials to unlock the assessment.</p>
+                                                <p style="color: #78350f; font-size: 0.875rem; font-weight: 600;">Current Progress: {{ $progressPercent }}%</p>
+                                            </div>
                                         @elseif($latestSubmission)
                                             {{-- Student has taken but can retake --}}
                                             <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 1.5rem;">
@@ -330,7 +478,7 @@
                                                     <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">{{ $assessment->description }}</p>
                                                 @endif
                                                 <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 6px; padding: 0.75rem; margin-bottom: 1rem; font-size: 0.875rem; color: #92400e;">
-                                                    <strong>Last Attempt:</strong> {{ number_format($latestSubmission->percentage, 1) }}% 
+                                                    <strong>Last Attempt:</strong> {{ number_format($latestSubmission->percentage, 1) }}%
                                                     ({{ $latestSubmission->status === 'passed' ? '✓ Passed' : '✗ Needs Improvement' }})
                                                     @if(!$hasUnlimitedAttempts)
                                                         | <strong>Attempts Remaining:</strong> {{ $remainingAttempts }}
@@ -430,5 +578,284 @@
             </div>
         </main>
     </div>
+
+    @if(auth()->user()->role === 'student' && $isEnrolled && $module->file_path && strtolower(pathinfo($module->file_path, PATHINFO_EXTENSION)) === 'pdf')
+    <script>
+        // PDF.js worker configuration
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+        // State management
+        const state = {
+            pdfDoc: null,
+            totalPages: 0,
+            viewedSet: new Set(),
+            maxPageReached: 0,  // Track the furthest page reached (never decreases)
+            pdfCompleted: false,
+            currentPage: 1,
+            moduleId: {{ $module->id }},
+            enrollmentId: null,
+            trackingLocked: false  // Prevent concurrent AJAX calls
+        };
+
+        // DOM Elements
+        const elements = {
+            pagesContainer: document.getElementById('pdfPagesContainer'),
+            progressText: document.getElementById('pdfProgressText'),
+            progressFill: document.getElementById('pdfProgressFill'),
+            progressContainer: document.getElementById('pdfProgressContainer')
+        };
+
+        // Load existing progress
+        fetch(`{{ route('modules.progress', $module->id) }}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.enrolled) {
+                    state.pdfCompleted = data.pdf_completed;
+                    state.totalPages = data.pdf_total_pages;
+                    state.maxPageReached = data.pdf_current_page || 0;
+
+                    // Update progress display based on max page reached
+                    updateProgress(state.maxPageReached, data.pdf_total_pages);
+
+                    if (data.pdf_completed) {
+                        showCompletionMessage();
+                    }
+                }
+            })
+            .catch(err => console.error('Error loading progress:', err));
+
+        // Load PDF
+        if (elements.pagesContainer) {
+            const pdfUrl = '{{ asset('storage/' . $module->file_path) }}';
+            console.log('Loading PDF from URL:', pdfUrl);
+            
+            pdfjsLib.getDocument(pdfUrl).promise
+                .then(function(pdf) {
+                    state.pdfDoc = pdf;
+                    state.totalPages = pdf.numPages;
+                    console.log('PDF loaded successfully, total pages:', state.totalPages);
+                    
+                    // Render first 3 pages immediately
+                    for (let num = 1; num <= Math.min(3, pdf.numPages); num++) {
+                        renderPage(num);
+                    }
+
+                    // Render remaining pages after a delay
+                    setTimeout(() => {
+                        for (let num = 4; num <= pdf.numPages; num++) {
+                            renderPage(num);
+                        }
+                    }, 500);
+
+                    // Start checking visible pages
+                    setTimeout(checkVisiblePages, 1000);
+                })
+                .catch(function(error) {
+                    console.error('Error loading PDF:', error);
+                    elements.pagesContainer.innerHTML = `<div class="alert alert-danger m-3">
+                        <strong>Error loading PDF:</strong> ${error.message || 'Unknown error'}<br>
+                        <small>Please check the browser console for more details or try downloading the file instead.</small>
+                    </div>`;
+                });
+        }
+
+        // Render a single page
+        function renderPage(num) {
+            if (!state.pdfDoc) return;
+
+            state.pdfDoc.getPage(num).then(function(page) {
+                const container = document.getElementById('pdfViewerContainer');
+                const containerWidth = container ? container.clientWidth - 60 : 800;
+                const viewport = page.getViewport({ scale: 1 });
+                const scale = containerWidth / viewport.width;
+                const scaledViewport = page.getViewport({ scale: scale });
+
+                const pageWrapper = document.createElement('div');
+                pageWrapper.className = 'pdf-page-wrapper';
+                pageWrapper.id = `pdf-page-${num}`;
+
+                const canvas = document.createElement('canvas');
+                canvas.className = 'pdf-page-canvas';
+                canvas.height = scaledViewport.height;
+                canvas.width = scaledViewport.width;
+                pageWrapper.appendChild(canvas);
+
+                // Add checkmark if already viewed
+                if (state.viewedSet.has(num)) {
+                    const badge = document.createElement('div');
+                    badge.className = 'page-viewed-badge';
+                    badge.id = `page-badge-${num}`;
+                    badge.innerHTML = '<i class="fas fa-check"></i>';
+                    pageWrapper.appendChild(badge);
+                }
+
+                elements.pagesContainer.appendChild(pageWrapper);
+
+                page.render({
+                    canvasContext: canvas.getContext('2d'),
+                    viewport: scaledViewport
+                });
+
+                // Setup intersection observer to track when page is viewed
+                // Only triggers tracking ONCE - subsequent views are ignored
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        // Only track if page is visible AND hasn't been tracked yet
+                        // This ensures scrolling UP doesn't affect progress
+                        if (entry.isIntersecting && !state.viewedSet.has(num) && !state.pdfCompleted) {
+                            trackPageView(num);
+
+                            // Add checkmark badge (only if not already present)
+                            if (!document.getElementById(`page-badge-${num}`)) {
+                                const badge = document.createElement('div');
+                                badge.className = 'page-viewed-badge';
+                                badge.id = `page-badge-${num}`;
+                                badge.innerHTML = '<i class="fas fa-check"></i>';
+                                pageWrapper.appendChild(badge);
+                            }
+                        }
+                    });
+                }, { threshold: 0.5 });
+
+                observer.observe(pageWrapper);
+            });
+        }
+
+        // Track page view via AJAX (only fires ONCE per page, never re-tracks)
+        function trackPageView(pageNum) {
+            // If already tracked or completed, ignore
+            if (state.viewedSet.has(pageNum) || state.pdfCompleted || state.trackingLocked) return;
+
+            // Mark as tracked immediately to prevent duplicate calls
+            state.viewedSet.add(pageNum);
+            state.trackingLocked = true;
+
+            // Update max page reached (only increases, never decreases)
+            if (pageNum > state.maxPageReached) {
+                state.maxPageReached = pageNum;
+            }
+
+            // Update UI immediately
+            updateProgress(state.maxPageReached, state.totalPages);
+
+            // Send to server
+            fetch(`{{ route('modules.progress.pdf', $module->id) }}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    page: pageNum,
+                    total_pages: state.totalPages
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                state.trackingLocked = false;
+                if (data.success) {
+                    // Update from server response
+                    if (data.pdf_completed && !state.pdfCompleted) {
+                        state.pdfCompleted = true;
+                        showCompletionMessage();
+                    }
+                }
+            })
+            .catch(err => {
+                state.trackingLocked = false;
+                console.error('Error tracking progress:', err);
+            });
+        }
+
+        // Check which pages are visible (only tracks pages that haven't been viewed yet)
+        function checkVisiblePages() {
+            if (state.pdfCompleted || !elements.pagesContainer) return;
+
+            const container = document.getElementById('pdfViewerContainer');
+            if (!container) return;
+
+            const containerRect = container.getBoundingClientRect();
+
+            for (let num = 1; num <= state.totalPages; num++) {
+                const pageElement = document.getElementById(`pdf-page-${num}`);
+                if (!pageElement) continue;
+
+                // Skip already tracked pages
+                if (state.viewedSet.has(num)) continue;
+
+                const pageRect = pageElement.getBoundingClientRect();
+                const isVisible = (
+                    pageRect.top < containerRect.bottom &&
+                    pageRect.bottom > containerRect.top
+                );
+
+                if (isVisible) {
+                    trackPageView(num);
+
+                    // Add badge if not present
+                    if (!document.getElementById(`page-badge-${num}`)) {
+                        const badge = document.createElement('div');
+                        badge.className = 'page-viewed-badge';
+                        badge.id = `page-badge-${num}`;
+                        badge.innerHTML = '<i class="fas fa-check"></i>';
+                        pageElement.appendChild(badge);
+                    }
+                }
+            }
+        }
+
+        // Update progress display (based on maxPageReached, never decreases)
+        function updateProgress(maxReached, totalPages) {
+            const percent = totalPages > 0 ? Math.round((maxReached / totalPages) * 100) : 0;
+            
+            if (elements.progressText) {
+                elements.progressText.textContent = `${maxReached}/${totalPages} pages (${percent}%)`;
+            }
+            if (elements.progressFill) {
+                elements.progressFill.style.width = percent + '%';
+            }
+        }
+
+        // Show completion message
+        function showCompletionMessage() {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #48bb78;
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                z-index: 9999;
+                animation: slideIn 0.3s ease;
+            `;
+            toast.innerHTML = '<strong>🎉 Congratulations!</strong><br>You have completed viewing this module.';
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+
+        // Scroll event listener
+        document.getElementById('pdfViewerContainer')?.addEventListener('scroll', function() {
+            checkVisiblePages();
+        });
+
+        // Add slide-in animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+    @endif
 </body>
 </html>

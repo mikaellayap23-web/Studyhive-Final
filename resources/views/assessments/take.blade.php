@@ -216,7 +216,7 @@
                     @csrf
                     
                     <div id="questions-container">
-                        @foreach($assessment->questions as $index => $question)
+                        @foreach($questions as $index => $question)
                             <div class="question-card">
                                 <div class="question-number">Question {{ $index + 1 }} ({{ $question['points'] ?? 1 }} point{{ (isset($question['points']) && $question['points'] != 1) ? 's' : '' }})</div>
                                 <div class="question-text">{{ $question['text'] }}</div>

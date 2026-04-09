@@ -165,6 +165,24 @@
                             <textarea id="description" name="description" rows="3">{{ old('description', $module->description) }}</textarea>
                         </div>
 
+                        <div class="form-group">
+                            <label for="image">Module Image</label>
+                            <p style="font-size: 0.8rem; color: #706f6c; margin-bottom: 0.5rem;">Leave empty to keep current image. JPG, PNG, or WebP (max 5MB)</p>
+                            @if($module->image_path)
+                                <div style="margin-bottom: 0.75rem;">
+                                    <img src="{{ asset('storage/' . $module->image_path) }}" alt="Current Image" style="max-width: 100%; max-height: 200px; border-radius: 6px; object-fit: cover;">
+                                    <p style="font-size: 0.75rem; color: #706f6c; margin-top: 0.25rem;">Current image</p>
+                                </div>
+                            @endif
+                            <input type="file" id="image" name="image" accept=".jpg,.jpeg,.png,.webp" onchange="previewImage(this, 'imagePreview')">
+                            <div id="imagePreview" style="margin-top: 0.75rem; display: none;">
+                                <img src="" alt="Preview" style="max-width: 100%; max-height: 200px; border-radius: 6px; object-fit: cover;">
+                            </div>
+                            @error('image')
+                                <p class="error-text" style="color: #991b1b; font-size: 0.8rem; margin-top: 0.5rem;">{{ $message }}</p>
+                            @enderror
+                        </div>
+
                         @if(auth()->user()->role === 'admin')
                             <div class="form-group">
                                 <label for="assigned_teacher_id">Assign to Teacher</label>
@@ -214,13 +232,7 @@
                             </select>
                         </div>
 
-                        <div class="form-group" style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
-                            <button type="submit" class="btn btn-primary">Update Module</button>
-                            <a href="{{ route('modules.index') }}" class="btn btn-secondary">Cancel</a>
-                        </div>
-                    </form>
-
-                    <!-- Assessment Section -->
+                    <!-- Assessment Section (INSIDE THE FORM) -->
                     <div class="assessment-section">
                         <div class="assessment-header">
                             <h3>
@@ -311,10 +323,30 @@
                                 </label>
                             </div>
 
+                            <div class="form-group">
+                                <label class="checkbox-wrapper">
+                                    <input type="checkbox" name="assessment[show_correct_answer]" value="1" {{ old('assessment.show_correct_answer', $module->assessment->show_correct_answer ?? false) ? 'checked' : '' }}>
+                                    Show Correct Answers (students will see correct answers after they use all attempts)
+                                </label>
+                            </div>
+
                             <!-- Hidden field to store questions as JSON -->
                             <input type="hidden" name="assessment[questions]" id="questions-json">
                         </div>
                     </div>
+
+                        <div class="form-group" style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+                            <button type="submit" class="btn btn-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
+                                    <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+                                    <polyline points="17 21 17 13 7 13 7 21"/>
+                                    <polyline points="7 3 7 8 15 8"/>
+                                </svg>
+                                Save Assessment
+                            </button>
+                            <a href="{{ route('modules.index') }}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
                 </div>
             </div>
         </main>
@@ -323,6 +355,19 @@
     <script>
         let questionCount = 0;
         const existingQuestions = @json($module->assessment->questions ?? []);
+
+        function previewImage(input, previewId) {
+            const preview = document.getElementById(previewId);
+            const img = preview.querySelector('img');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    img.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
 
         function toggleAssessmentFields() {
             const fields = document.getElementById('assessment-fields');

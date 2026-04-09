@@ -4,32 +4,51 @@ namespace App\Http\Controllers;
 
 use App\Models\Announcement;
 use App\Models\AnnouncementRead;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class AnnouncementController extends Controller
 {
     /**
      * Display announcements.
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Mark all announcements as read for the current user
-        $unreadAnnouncements = Announcement::whereDoesntHave('reads', function ($query) {
-            $query->where('user_id', auth()->id());
-        })->get();
+        $query = Announcement::with('user');
 
-        foreach ($unreadAnnouncements as $announcement) {
-            AnnouncementRead::create([
-                'user_id' => auth()->id(),
-                'announcement_id' => $announcement->id,
-            ]);
+        // Apply filters
+        if ($request->filled('search')) {
+            $query->where('title', 'like', "%{$request->search}%");
+        }
+        if ($request->filled('author')) {
+            $query->where('user_id', $request->author);
         }
 
-        $announcements = Announcement::with('user')
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $announcements = $query->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($announcement) {
+                $isOwn = $announcement->user_id === Auth::id();
+                $announcement->is_read = $isOwn || $announcement->reads()
+                    ->where('user_id', Auth::id())
+                    ->exists();
+                return $announcement;
+            });
 
         return view('announcements.index', compact('announcements'));
+    }
+
+    /**
+     * Mark a single announcement as read.
+     */
+    public function markAsRead(Announcement $announcement)
+    {
+        AnnouncementRead::firstOrCreate([
+            'user_id' => Auth::id(),
+            'announcement_id' => $announcement->id,
+        ]);
+
+        return redirect()->route('announcements.index');
     }
 
     /**
@@ -43,7 +62,7 @@ class AnnouncementController extends Controller
         ]);
 
         Announcement::create([
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'title' => $validated['title'],
             'content' => $validated['content'],
         ]);
@@ -57,7 +76,7 @@ class AnnouncementController extends Controller
     public function update(Request $request, Announcement $announcement)
     {
         // Only allow admin or the creator to edit
-        if (auth()->user()->role !== 'admin' && auth()->id() !== $announcement->user_id) {
+        if (Auth::user()->role !== 'admin' && Auth::id() !== $announcement->user_id) {
             abort(403);
         }
 
@@ -77,7 +96,7 @@ class AnnouncementController extends Controller
     public function destroy(Announcement $announcement)
     {
         // Only allow admin or the creator to delete
-        if (auth()->user()->role !== 'admin' && auth()->id() !== $announcement->user_id) {
+        if (Auth::user()->role !== 'admin' && Auth::id() !== $announcement->user_id) {
             abort(403);
         }
 

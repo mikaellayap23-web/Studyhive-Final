@@ -84,6 +84,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get module progress records for the user.
+     */
+    public function moduleProgress()
+    {
+        return $this->hasMany(ModuleProgress::class);
+    }
+
+    /**
      * Check if the user is pending approval.
      */
     public function isPending(): bool

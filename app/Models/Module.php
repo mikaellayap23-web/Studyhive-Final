@@ -14,6 +14,7 @@ class Module extends Model
         'assigned_teacher_id',
         'title',
         'description',
+        'image_path',
         'file_path',
         'status',
         'order',
@@ -45,5 +46,21 @@ class Module extends Model
     public function assessment(): HasOne
     {
         return $this->hasOne(Assessment::class);
+    }
+
+    /**
+     * Get progress records for this module
+     */
+    public function progress(): HasMany
+    {
+        return $this->hasMany(ModuleProgress::class);
+    }
+
+    /**
+     * Check if a user can manage this module (edit/update/delete/manage students)
+     */
+    public function canManage(User $user): bool
+    {
+        return $user->role === 'admin' || $this->assigned_teacher_id === $user->id;
     }
 }

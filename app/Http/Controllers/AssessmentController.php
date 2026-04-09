@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Arr;
 
 class AssessmentController extends Controller
 {
@@ -234,7 +235,11 @@ class AssessmentController extends Controller
         // Get latest submission if exists
         $latestSubmission = $assessment->latestSubmission($user);
 
-        return view('assessments.take', compact('assessment', 'latestSubmission'));
+        // Randomize ONLY the question order (NOT the options)
+        $questions = $assessment->questions;
+        shuffle($questions);
+
+        return view('assessments.take', compact('assessment', 'latestSubmission', 'questions'));
     }
 
     /**
@@ -260,7 +265,7 @@ class AssessmentController extends Controller
             'answers' => ['required', 'array'],
         ]);
 
-        // Calculate score
+        // Calculate score using original questions (server stores correct answer indices)
         $questions = $assessment->questions;
         $answers = $validated['answers'];
         $totalPoints = 0;

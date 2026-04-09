@@ -20,11 +20,13 @@ class Assessment extends Model
         'passing_score',
         'max_attempts',
         'is_published',
+        'show_correct_answer',
     ];
 
     protected $casts = [
         'questions' => 'array',
         'is_published' => 'boolean',
+        'show_correct_answer' => 'boolean',
         'duration_minutes' => 'integer',
         'passing_score' => 'integer',
         'max_attempts' => 'integer',

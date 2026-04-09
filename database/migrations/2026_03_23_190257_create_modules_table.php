@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('title');
             $table->text('description')->nullable();
             $table->text('content')->nullable();
+            $table->string('image_path')->nullable(); // Module cover image
             $table->string('file_path')->nullable();
             $table->enum('status', ['draft', 'published'])->default('draft');
             $table->integer('order')->default(0);

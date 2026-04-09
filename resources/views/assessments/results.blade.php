@@ -198,14 +198,19 @@
 
                 <!-- Question Review -->
                 <h2 style="margin-bottom: 1rem;">Answer Review</h2>
-                
+
+                @php
+                    $hasUsedAllAttempts = !$submission->assessment->canUserTake(auth()->user());
+                    $showCorrectAnswers = $submission->assessment->show_correct_answer && $hasUsedAllAttempts;
+                @endphp
+
                 @foreach($submission->assessment->questions as $index => $question)
                     @php
                         $userAnswer = $submission->answers[$question['id']] ?? null;
                         $correctAnswer = $question['correct_answer'];
                         $isCorrect = $userAnswer == $correctAnswer;
                     @endphp
-                    
+
                     <div class="question-review {{ $isCorrect ? 'correct' : 'incorrect' }}">
                         <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
                             <div>
@@ -216,25 +221,30 @@
                                 ({{ $question['points'] ?? 1 }} point{{ (isset($question['points']) && $question['points'] != 1) ? 's' : '' }})
                             </span>
                         </div>
-                        
+
                         <div style="margin-top: 1rem;">
                             <div style="margin-bottom: 0.5rem;">
                                 <strong>Your Answer:</strong>
                                 @if($userAnswer !== null)
                                     <span class="answer-indicator {{ $isCorrect ? 'correct' : 'incorrect' }}">
-                                        {{ $isCorrect ? '✓' : '✗' }}
-                                        {{ $question['options'][$userAnswer] ?? 'No answer' }}
+                                        {{ $isCorrect ? '✓ Correct' : '✗ Incorrect' }}
                                     </span>
                                 @else
                                     <span class="answer-indicator incorrect">No answer</span>
                                 @endif
                             </div>
-                            
-                            @if(!$isCorrect)
+
+                            @if(!$isCorrect && $showCorrectAnswers)
                                 <div>
                                     <strong>Correct Answer:</strong>
                                     <span class="answer-indicator correct">
                                         ✓ {{ $question['options'][$correctAnswer] }}
+                                    </span>
+                                </div>
+                            @elseif(!$isCorrect && !$showCorrectAnswers)
+                                <div>
+                                    <span class="answer-indicator incorrect" style="background: #fef3c7; color: #92400e;">
+                                        ⓘ Correct answer hidden
                                     </span>
                                 </div>
                             @endif

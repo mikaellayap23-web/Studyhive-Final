@@ -59,13 +59,50 @@
                     </div>
                 @endif
 
+                <!-- Filters -->
+                <form method="GET" action="{{ route('announcements.index') }}" style="display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: flex-end;">
+                    <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
+                        <label for="filter_search" style="font-size: 0.8rem; margin-bottom: 0.25rem;">Search</label>
+                        <input type="text" id="filter_search" name="search" value="{{ request('search') }}" placeholder="Search by title" style="padding: 0.5rem 0.75rem; border: 1px solid #dfe3e8; border-radius: 6px; font-size: 0.875rem; font-family: inherit; background-color: #fafbfc;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
+                        <label for="filter_author" style="font-size: 0.8rem; margin-bottom: 0.25rem;">Author</label>
+                        <select id="filter_author" name="author" style="padding: 0.5rem 0.75rem; border: 1px solid #dfe3e8; border-radius: 6px; font-size: 0.875rem; font-family: inherit; background-color: #fafbfc;">
+                            <option value="">All Authors</option>
+                            @php
+                                $authors = \App\Models\User::whereIn('role', ['admin', 'teacher'])->orderBy('first_name')->get();
+                            @endphp
+                            @foreach($authors as $author)
+                                <option value="{{ $author->id }}" {{ request('author') == $author->id ? 'selected' : '' }}>
+                                    {{ $author->first_name }} {{ $author->last_name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-secondary btn-sm" style="align-self: flex-end;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 0.25rem;">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="m21 21-4.3-4.3"/>
+                        </svg>
+                        Filter
+                    </button>
+                    @if(request('search') || request('author'))
+                        <a href="{{ route('announcements.index') }}" class="btn btn-secondary btn-sm" style="align-self: flex-end;">Clear</a>
+                    @endif
+                </form>
+
                 <!-- Announcements Grid -->
                 <div class="announcements-grid">
                     @forelse($announcements as $announcement)
-                        <div class="announcement-card">
+                        <div class="announcement-card {{ $announcement->user_id !== auth()->id() && !$announcement->is_read ? 'unread' : '' }}">
                             <div class="announcement-header">
                                 <div>
-                                    <h3 class="announcement-title">{{ $announcement->title }}</h3>
+                                    <h3 class="announcement-title">
+                                        @if($announcement->user_id !== auth()->id() && !$announcement->is_read)
+                                            <span class="unread-dot" title="Unread"></span>
+                                        @endif
+                                        {{ $announcement->title }}
+                                    </h3>
                                     <div class="announcement-meta">
                                         <span class="announcement-author">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -77,6 +114,19 @@
                                         <span class="role-badge role-{{ $announcement->user->role }}">
                                             {{ ucfirst($announcement->user->role) }}
                                         </span>
+                                        @if($announcement->user_id !== auth()->id())
+                                            @if($announcement->is_read)
+                                                <span class="read-status">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                                                        <polyline points="22 4 12 14.01 9 11.01"/>
+                                                    </svg>
+                                                    Read
+                                                </span>
+                                            @else
+                                                <span class="unread-status">Unread</span>
+                                            @endif
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -92,8 +142,35 @@
                                         </svg>
                                         {{ $announcement->created_at->format('M d, Y') }}
                                     </span>
-                                    @if(auth()->user()->role === 'admin' || (auth()->user()->role === 'teacher' && auth()->user()->id === $announcement->user_id))
-                                        <div class="announcement-actions">
+                                    <div class="announcement-actions">
+                                        <button class="btn btn-secondary btn-sm" onclick="openViewModal('{{ addslashes($announcement->title) }}', '{{ addslashes($announcement->user->first_name) }} {{ addslashes($announcement->user->last_name) }}', '{{ addslashes($announcement->user->role) }}', '{{ addslashes($announcement->content) }}', '{{ $announcement->created_at->format('M d, Y') }}')">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                                <circle cx="12" cy="12" r="3"/>
+                                            </svg>
+                                            View
+                                        </button>
+                                        @if(!$announcement->is_read)
+                                            <form action="{{ route('announcements.mark-read', $announcement->id) }}" method="POST" style="display: inline;">
+                                                @csrf
+                                                <button type="submit" class="btn btn-primary btn-sm">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                                                        <polyline points="22 4 12 14.01 9 11.01"/>
+                                                    </svg>
+                                                    Mark as Read
+                                                </button>
+                                            </form>
+                                        @elseif($announcement->user_id !== auth()->id())
+                                            <span class="read-status">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                                                    <polyline points="22 4 12 14.01 9 11.01"/>
+                                                </svg>
+                                                Read
+                                            </span>
+                                        @endif
+                                        @if(auth()->user()->role === 'admin' || (auth()->user()->role === 'teacher' && auth()->user()->id === $announcement->user_id))
                                             <button class="btn btn-warning btn-sm" onclick="openEditModal({{ $announcement->id }}, '{{ addslashes($announcement->title) }}', '{{ addslashes($announcement->content) }}')">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                     <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
@@ -111,8 +188,8 @@
                                                     Delete
                                                 </button>
                                             </form>
-                                        </div>
-                                    @endif
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -128,6 +205,45 @@
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- View Announcement Modal -->
+    <div class="modal-overlay" id="viewModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="view_modal_title">Announcement</h3>
+                <button class="modal-close" onclick="closeViewModal()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="announcement-view-meta" style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid #e2e8e4;">
+                    <span style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.85rem; color: #706f6c;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                        <span id="view_modal_author"></span>
+                    </span>
+                    <span class="role-badge" id="view_modal_role"></span>
+                    <span style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.85rem; color: #706f6c;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/>
+                            <line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                        <span id="view_modal_date"></span>
+                    </span>
+                </div>
+                <div id="view_modal_content" style="font-size: 0.95rem; color: #2d3748; line-height: 1.7; white-space: pre-wrap;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeViewModal()">Close</button>
+            </div>
+        </div>
     </div>
 
     <!-- Add Announcement Modal -->
@@ -198,6 +314,20 @@
     @endif
 
     <script>
+        function openViewModal(title, author, role, content, date) {
+            document.getElementById('view_modal_title').textContent = title;
+            document.getElementById('view_modal_author').textContent = author;
+            document.getElementById('view_modal_role').textContent = role.charAt(0).toUpperCase() + role.slice(1);
+            document.getElementById('view_modal_role').className = 'role-badge role-' + role;
+            document.getElementById('view_modal_date').textContent = date;
+            document.getElementById('view_modal_content').textContent = content;
+            document.getElementById('viewModal').classList.add('active');
+        }
+
+        function closeViewModal() {
+            document.getElementById('viewModal').classList.remove('active');
+        }
+
         function openAddModal() {
             document.getElementById('addModal').classList.add('active');
         }
@@ -218,6 +348,12 @@
         }
 
         // Close modal when clicking outside
+        document.getElementById('viewModal')?.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeViewModal();
+            }
+        });
+
         document.getElementById('addModal')?.addEventListener('click', function(e) {
             if (e.target === this) {
                 closeAddModal();

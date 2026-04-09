@@ -158,6 +158,19 @@
                             <div class="stat-value">{{ $stats['total_modules'] }}</div>
                         </div>
 
+                        <!-- Enrolled Modules -->
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <span class="stat-label">Enrolled</span>
+                            </div>
+                            <div class="stat-value">{{ $stats['enrolled_modules'] }}</div>
+                        </div>
+
                         <!-- Completed Modules -->
                         <div class="stat-card">
                             <div class="stat-header">
@@ -169,19 +182,6 @@
                                 <span class="stat-label">Completed</span>
                             </div>
                             <div class="stat-value">{{ $stats['completed_modules'] }}</div>
-                        </div>
-
-                        <!-- Ongoing Modules -->
-                        <div class="stat-card">
-                            <div class="stat-header">
-                                <div class="stat-icon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                                <span class="stat-label">Ongoing</span>
-                            </div>
-                            <div class="stat-value">{{ $stats['ongoing_modules'] }}</div>
                         </div>
 
                         <!-- Announcements -->
@@ -201,139 +201,76 @@
 
                 <!-- Admin Dashboard -->
                 @if(auth()->user()->role === 'admin')
-                    <h2 class="section-title">Admin Panel</h2>
+                    <h2 class="section-title">Audit Trail</h2>
                     <div class="cards-grid">
-                        <div class="card">
-                            <div class="card-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                                </svg>
-                            </div>
-                            <h3>Manage Users</h3>
-                            <p>View and manage all registered users and their accounts.</p>
-                        </div>
+                        @php
+                            $logPath = storage_path('logs/audit.log');
+                            $auditEntries = [];
+                            if (file_exists($logPath)) {
+                                $lines = file($logPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+                                foreach ($lines as $line) {
+                                    $data = json_decode($line, true);
+                                    if ($data && isset($data['action'])) {
+                                        $auditEntries[] = $data;
+                                    }
+                                }
+                                $auditEntries = array_reverse($auditEntries);
+                            }
+                            $recentEntries = array_slice($auditEntries, 0, 4);
+                        @endphp
 
-                        <div class="card">
-                            <div class="card-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        @forelse($recentEntries as $entry)
+                            <a href="{{ route('admin.audit-trail') }}" class="card" style="text-decoration: none; color: inherit;">
+                                <div class="card-icon">
+                                    @php
+                                        $icons = [
+                                            'Created' => '<path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />',
+                                            'Updated' => '<path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />',
+                                            'Deleted' => '<path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />',
+                                            'Approved' => '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />',
+                                            'Rejected' => '<path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />',
+                                        ];
+                                        $icon = $icons[$entry['action']] ?? '<path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />';
+                                    @endphp
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        {!! $icon !!}
+                                    </svg>
+                                </div>
+                                <h3>{{ $entry['action'] }} - {{ $entry['target'] }}</h3>
+                                <p>{{ $entry['details'] }}</p>
+                                <span style="font-size: 0.75rem; color: #706f6c; margin-top: 0.5rem; display: block;">{{ $entry['timestamp'] }}</span>
+                            </a>
+                        @empty
+                            <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 2rem;">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="width: 48px; height: 48px; margin: 0 auto 1rem; opacity: 0.4;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
+                                <h3>No Audit Activity</h3>
+                                <p>Admin activity will appear here once actions are taken.</p>
+                                <a href="{{ route('admin.audit-trail') }}" class="btn btn-primary" style="margin-top: 1rem; display: inline-block; width: auto;">
+                                    View Full Audit Trail
+                                </a>
                             </div>
-                            <h3>Approve Accounts</h3>
-                            <p>Review and approve pending user registration requests.</p>
-                        </div>
+                        @endforelse
 
-                        <div class="card">
-                            <div class="card-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                </svg>
-                            </div>
-                            <h3>View Reports</h3>
-                            <p>Check system analytics and user activity reports.</p>
-                        </div>
-
-                        <div class="card">
-                            <div class="card-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
-                            </div>
-                            <h3>Settings</h3>
-                            <p>Configure system settings and preferences.</p>
-                        </div>
+                        @if(count($recentEntries) > 0)
+                            <a href="{{ route('admin.audit-trail') }}" class="card" style="text-decoration: none; color: inherit; display: flex; align-items: center; justify-content: center; background-color: #f8faf9;">
+                                <div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width: 32px; height: 32px; margin: 0 auto 0.5rem; stroke: #2d5a3d;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <h3>View Full Audit Trail</h3>
+                                    <p>See all admin activity and logs.</p>
+                                </div>
+                            </a>
+                        @endif
                     </div>
 
                 <!-- Teacher Dashboard -->
                 @elseif(auth()->user()->role === 'teacher')
-                    <h2 class="section-title">Teacher Panel</h2>
-                    <div class="cards-grid">
-                        <div class="card">
-                            <div class="card-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                                </svg>
-                            </div>
-                            <h3>My Courses</h3>
-                            <p>View and manage your assigned courses and lessons.</p>
-                        </div>
-
-                        <div class="card">
-                            <div class="card-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                </svg>
-                            </div>
-                            <h3>Students</h3>
-                            <p>View student list and track their progress.</p>
-                        </div>
-
-                        <div class="card">
-                            <div class="card-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                                </svg>
-                            </div>
-                            <h3>Assignments</h3>
-                            <p>Create and manage assignments for your students.</p>
-                        </div>
-
-                        <div class="card">
-                            <div class="card-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                </svg>
-                            </div>
-                            <h3>Grades</h3>
-                            <p>Record and manage student grades and scores.</p>
-                        </div>
-                    </div>
 
                 <!-- Student Dashboard -->
                 @else
-                    <h2 class="section-title">Student Panel</h2>
-                    <div class="cards-grid">
-                        <div class="card">
-                            <div class="card-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                                </svg>
-                            </div>
-                            <h3>My Courses</h3>
-                            <p>Access your enrolled courses and learning materials.</p>
-                        </div>
-
-                        <div class="card">
-                            <div class="card-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                                </svg>
-                            </div>
-                            <h3>Assignments</h3>
-                            <p>View and submit your assignments and homework.</p>
-                        </div>
-
-                        <div class="card">
-                            <div class="card-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                            <h3>My Progress</h3>
-                            <p>Track your learning progress and achievements.</p>
-                        </div>
-
-                        <div class="card">
-                            <div class="card-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                            </div>
-                            <h3>Schedule</h3>
-                            <p>View your class schedule and important dates.</p>
-                        </div>
-                    </div>
                 @endif
             </div>
         </main>

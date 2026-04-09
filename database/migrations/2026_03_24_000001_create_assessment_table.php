@@ -17,11 +17,12 @@ return new class extends Migration
             $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
             $table->string('title');
             $table->text('description')->nullable();
-            $table->text('questions'); // JSON format for questions
+            $table->json('questions'); // Native JSON type for faster parsing
             $table->integer('duration_minutes')->default(60); // Time limit in minutes
             $table->integer('passing_score')->default(75); // Passing score percentage
             $table->integer('max_attempts')->default(1); // Max attempts (0 = unlimited)
             $table->boolean('is_published')->default(false);
+            $table->boolean('show_correct_answer')->default(false); // Show answers after max attempts
             $table->timestamps();
         });
     }

@@ -205,13 +205,16 @@ main {
     border-bottom: none;
 }
 
-/* Status Badges */
+/* ========================================
+   Badges
+   ======================================== */
 .badge {
     display: inline-block;
-    padding: 0.25rem 0.625rem;
+    padding: 0.2rem 0.625rem;
     border-radius: 9999px;
-    font-size: 0.725rem;
+    font-size: 0.7rem;
     font-weight: 600;
+    letter-spacing: 0.02em;
 }
 
 .badge-pending {

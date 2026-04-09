@@ -53,6 +53,41 @@
                     </button>
                 </div>
 
+                <!-- Filters -->
+                <form method="GET" action="{{ route('admin.users.index') }}" style="display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: flex-end;">
+                    <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
+                        <label for="filter_role" style="font-size: 0.8rem; margin-bottom: 0.25rem;">Role</label>
+                        <select id="filter_role" name="role" style="padding: 0.5rem 0.75rem; border: 1px solid #dfe3e8; border-radius: 6px; font-size: 0.875rem; font-family: inherit; background-color: #fafbfc;">
+                            <option value="">All Roles</option>
+                            <option value="admin" {{ request('role') === 'admin' ? 'selected' : '' }}>Admin</option>
+                            <option value="teacher" {{ request('role') === 'teacher' ? 'selected' : '' }}>Teacher</option>
+                            <option value="student" {{ request('role') === 'student' ? 'selected' : '' }}>Student</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
+                        <label for="filter_status" style="font-size: 0.8rem; margin-bottom: 0.25rem;">Status</label>
+                        <select id="filter_status" name="status" style="padding: 0.5rem 0.75rem; border: 1px solid #dfe3e8; border-radius: 6px; font-size: 0.875rem; font-family: inherit; background-color: #fafbfc;">
+                            <option value="">All Statuses</option>
+                            <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
+                            <option value="suspended" {{ request('status') === 'suspended' ? 'selected' : '' }}>Suspended</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
+                        <label for="filter_search" style="font-size: 0.8rem; margin-bottom: 0.25rem;">Search</label>
+                        <input type="text" id="filter_search" name="search" value="{{ request('search') }}" placeholder="Name or email" style="padding: 0.5rem 0.75rem; border: 1px solid #dfe3e8; border-radius: 6px; font-size: 0.875rem; font-family: inherit; background-color: #fafbfc;">
+                    </div>
+                    <button type="submit" class="btn btn-secondary btn-sm" style="align-self: flex-end;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 0.25rem;">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="m21 21-4.3-4.3"/>
+                        </svg>
+                        Filter
+                    </button>
+                    @if(request('role') || request('status') || request('search'))
+                        <a href="{{ route('admin.users.index') }}" class="btn btn-secondary btn-sm" style="align-self: flex-end;">Clear</a>
+                    @endif
+                </form>
+
                 <!-- Pending Users Table -->
                 <div class="card">
                     <div class="card-header">
@@ -160,7 +195,7 @@
                                             <td>{{ $user->created_at->format('M d, Y') }}</td>
                                             <td>
                                                 <div class="action-buttons">
-                                                    <button class="btn btn-warning btn-sm" onclick="editUser({{ $user->id }}, '{{ $user->first_name }}', '{{ $user->last_name }}', '{{ $user->email }}', '{{ $user->role }}')">
+                                                    <button class="btn btn-warning btn-sm" onclick="editUser({{ $user->id }}, '{{ $user->first_name }}', '{{ $user->last_name }}', '{{ $user->email }}', '{{ $user->role }}', '{{ $user->status }}')">
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                             <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
                                                             <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -233,7 +268,8 @@
 
                     <div class="form-group">
                         <label for="password">Password</label>
-                        <input type="password" id="password" name="password" required>
+                        <input type="password" id="password" name="password" placeholder="Leave empty to auto-generate">
+                        <p style="font-size: 0.75rem; color: #706f6c; margin-top: 0.25rem;">If left empty, a random password will be generated and emailed to the user.</p>
                     </div>
 
                     <div class="form-group">
@@ -292,6 +328,14 @@
                             <option value="admin">Admin</option>
                         </select>
                     </div>
+
+                    <div class="form-group">
+                        <label for="edit_status">Status</label>
+                        <select id="edit_status" name="status" required>
+                            <option value="active">Active</option>
+                            <option value="suspended">Suspended</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
@@ -314,12 +358,13 @@
             document.getElementById('editUserModal').classList.remove('active');
         }
 
-        function editUser(id, firstName, lastName, email, role) {
+        function editUser(id, firstName, lastName, email, role, status) {
             document.getElementById('editUserForm').action = '/admin/users/' + id;
             document.getElementById('edit_first_name').value = firstName;
             document.getElementById('edit_last_name').value = lastName;
             document.getElementById('edit_email').value = email;
             document.getElementById('edit_role').value = role;
+            document.getElementById('edit_status').value = status;
             document.getElementById('editUserModal').classList.add('active');
         }
 

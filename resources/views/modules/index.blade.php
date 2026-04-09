@@ -59,10 +59,57 @@
                     </div>
                 @endif
 
+                <!-- Filters -->
+                <form method="GET" action="{{ route('modules.index') }}" style="display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: flex-end;">
+                    <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
+                        <label for="filter_search" style="font-size: 0.8rem; margin-bottom: 0.25rem;">Search</label>
+                        <input type="text" id="filter_search" name="search" value="{{ request('search') }}" placeholder="Search by title" style="padding: 0.5rem 0.75rem; border: 1px solid #dfe3e8; border-radius: 6px; font-size: 0.875rem; font-family: inherit; background-color: #fafbfc;">
+                    </div>
+                    @if(auth()->user()->role === 'admin')
+                        <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
+                            <label for="filter_teacher" style="font-size: 0.8rem; margin-bottom: 0.25rem;">Assigned Teacher</label>
+                            <select id="filter_teacher" name="teacher" style="padding: 0.5rem 0.75rem; border: 1px solid #dfe3e8; border-radius: 6px; font-size: 0.875rem; font-family: inherit; background-color: #fafbfc;">
+                                <option value="">All Teachers</option>
+                                @php
+                                    $teachers = \App\Models\User::where('role', 'teacher')->orderBy('first_name')->get();
+                                @endphp
+                                @foreach($teachers as $teacher)
+                                    <option value="{{ $teacher->id }}" {{ request('teacher') == $teacher->id ? 'selected' : '' }}>
+                                        {{ $teacher->first_name }} {{ $teacher->last_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @endif
+                    <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 140px;">
+                        <label for="filter_status" style="font-size: 0.8rem; margin-bottom: 0.25rem;">Status</label>
+                        <select id="filter_status" name="status" style="padding: 0.5rem 0.75rem; border: 1px solid #dfe3e8; border-radius: 6px; font-size: 0.875rem; font-family: inherit; background-color: #fafbfc;">
+                            <option value="">All</option>
+                            <option value="draft" {{ request('status') === 'draft' ? 'selected' : '' }}>Draft</option>
+                            <option value="published" {{ request('status') === 'published' ? 'selected' : '' }}>Published</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-secondary btn-sm" style="align-self: flex-end;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 0.25rem;">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="m21 21-4.3-4.3"/>
+                        </svg>
+                        Filter
+                    </button>
+                    @if(request('search') || request('teacher') || request('status'))
+                        <a href="{{ route('modules.index') }}" class="btn btn-secondary btn-sm" style="align-self: flex-end;">Clear</a>
+                    @endif
+                </form>
+
                 <!-- Modules Grid -->
                 <div class="modules-grid">
                     @forelse($modules as $module)
                         <div class="module-card">
+                            @if($module->image_path)
+                                <div class="module-image">
+                                    <img src="{{ asset('storage/' . $module->image_path) }}" alt="{{ $module->title }}">
+                                </div>
+                            @endif
                             <div class="module-header">
                                 <div>
                                     <h3 class="module-title">{{ $module->title }}</h3>
@@ -107,7 +154,7 @@
                                         </svg>
                                         {{ $module->created_at->format('M d, Y') }}
                                     </span>
-                                    @if(auth()->user()->role === 'admin' || (auth()->user()->role === 'teacher' && auth()->id() === $module->user_id) || (auth()->user()->role === 'teacher' && auth()->id() === $module->assigned_teacher_id))
+                                    @if(auth()->user()->role === 'admin' || $module->canManage(auth()->user()))
                                         <div class="module-actions">
                                             @if(auth()->user()->role === 'admin' || auth()->user()->role === 'teacher')
                                                 <a href="{{ route('modules.students', $module->id) }}" class="btn btn-primary btn-sm">
@@ -137,6 +184,16 @@
                                                     Delete
                                                 </button>
                                             </form>
+                                        </div>
+                                    @else
+                                        <div class="module-actions">
+                                            <a href="{{ route('modules.show', $module->id) }}" class="btn btn-secondary btn-sm">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                                    <circle cx="12" cy="12" r="3"/>
+                                                </svg>
+                                                View
+                                            </a>
                                         </div>
                                     @endif
                                 </div>
