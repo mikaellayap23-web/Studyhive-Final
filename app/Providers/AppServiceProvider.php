@@ -20,7 +20,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if (config('app.env') === 'production' || config('app.force_https')) {
+        // Auto-detect Cloudflare tunnel or any HTTPS proxy
+        if (config('app.force_https')
+            || config('app.env') === 'production'
+            || request()->header('X-Forwarded-Proto') === 'https'
+            || str_contains(request()->header('Host', ''), 'trycloudflare.com')
+        ) {
             URL::forceScheme('https');
         }
     }
