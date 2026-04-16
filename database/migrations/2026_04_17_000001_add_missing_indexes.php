@@ -19,15 +19,12 @@ return new class extends Migration
         Schema::table('enrollments', function (Blueprint $table) {
             $table->dropIndex(['user_id']);
         });
-
         Schema::table('module_progress', function (Blueprint $table) {
             $table->dropIndex(['user_id']);
         });
-
         Schema::table('announcement_reads', function (Blueprint $table) {
             $table->dropIndex(['user_id']);
         });
-
         Schema::table('assessment_submission', function (Blueprint $table) {
             $table->dropIndex(['user_id']);
         });
@@ -36,12 +33,16 @@ return new class extends Migration
     private function addIndexIfNotExists(string $table, string $column): void
     {
         $indexName = "{$table}_{$column}_index";
-        $sm = Schema::getConnection()->getDoctrineSchemaManager();
+        $indexes = Schema::getIndexes($table);
 
-        if (!collect(Schema::getIndexListing($table))->contains($indexName)) {
-            Schema::table($table, function (Blueprint $table) use ($column) {
-                $table->index($column);
-            });
+        foreach ($indexes as $index) {
+            if ($index['name'] === $indexName) {
+                return;
+            }
         }
+
+        Schema::table($table, function (Blueprint $blueprint) use ($column) {
+            $blueprint->index($column);
+        });
     }
 };
