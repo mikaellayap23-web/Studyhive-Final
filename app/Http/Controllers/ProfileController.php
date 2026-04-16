@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
@@ -15,7 +16,23 @@ class ProfileController extends Controller
      */
     public function show()
     {
-        return view('pages.profile');
+        $auditEntries = [];
+        $logPath = storage_path('logs/audit.log');
+
+        if (File::exists($logPath)) {
+            $user = Auth::user();
+            $lines = File::lines($logPath);
+            foreach ($lines as $line) {
+                $data = json_decode($line, true);
+                if ($data && isset($data['action']) && isset($data['user_id']) && $data['user_id'] == $user->id) {
+                    $auditEntries[] = $data;
+                }
+            }
+            $auditEntries = array_reverse($auditEntries);
+            $auditEntries = array_slice($auditEntries, 0, 20);
+        }
+
+        return view('pages.profile', compact('auditEntries'));
     }
 
     /**

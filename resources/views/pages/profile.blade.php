@@ -158,6 +158,57 @@
                                 </div>
                             </form>
                         </div>
+
+                        <!-- Audit Trail Card -->
+                        @if(count($auditEntries) > 0)
+                        <div class="profile-card">
+                            <div class="profile-card-header">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                <h2>Activity Log</h2>
+                            </div>
+
+                            <div style="overflow-x: auto;">
+                                <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
+                                    <thead>
+                                        <tr style="border-bottom: 2px solid #e2e8e4;">
+                                            <th style="padding: 0.75rem; text-align: left; color: #4a5568; font-weight: 600;">Date</th>
+                                            <th style="padding: 0.75rem; text-align: left; color: #4a5568; font-weight: 600;">Action</th>
+                                            <th style="padding: 0.75rem; text-align: left; color: #4a5568; font-weight: 600;">Target</th>
+                                            <th style="padding: 0.75rem; text-align: left; color: #4a5568; font-weight: 600;">Details</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($auditEntries as $entry)
+                                            <tr style="border-bottom: 1px solid #f0f0f0;">
+                                                <td style="padding: 0.75rem; white-space: nowrap; color: #706f6c;">{{ $entry['timestamp'] }}</td>
+                                                <td style="padding: 0.75rem;">
+                                                    @php
+                                                        $colors = [
+                                                            'created' => '#16a34a',
+                                                            'updated' => '#2563eb',
+                                                            'deleted' => '#dc2626',
+                                                            'approved' => '#16a34a',
+                                                            'rejected' => '#dc2626',
+                                                            'soft deleted' => '#f59e0b',
+                                                            'restored' => '#8b5cf6',
+                                                            'permanently deleted' => '#dc2626',
+                                                            'completed' => '#16a34a',
+                                                        ];
+                                                        $color = $colors[strtolower($entry['action'])] ?? '#4a5568';
+                                                    @endphp
+                                                    <span style="color: {{ $color }}; font-weight: 600;">{{ $entry['action'] }}</span>
+                                                </td>
+                                                <td style="padding: 0.75rem;">{{ $entry['target'] }}</td>
+                                                <td style="padding: 0.75rem; color: #706f6c;">{{ $entry['details'] }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        @endif
                     </div>
                 </div>
             </div>
