@@ -36,8 +36,8 @@ class UserController extends Controller
             });
         }
 
-        $pendingUsers = (clone $query)->where('status', 'pending')->orderBy('created_at', 'desc')->get();
-        $allUsers = (clone $query)->where('status', '!=', 'pending')->orderBy('created_at', 'desc')->get();
+        $pendingUsers = (clone $query)->where('status', 'pending')->orderBy('created_at', 'desc')->paginate(15, ['*'], 'pending_page');
+        $allUsers = (clone $query)->where('status', '!=', 'pending')->orderBy('created_at', 'desc')->paginate(15, ['*'], 'users_page');
 
         return view('admin.user_management', compact('pendingUsers', 'allUsers'));
     }

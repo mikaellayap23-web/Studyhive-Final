@@ -155,6 +155,11 @@
                                     @endforelse
                                 </tbody>
                             </table>
+                            @if($pendingUsers->hasPages())
+                                <div style="margin-top: 1rem; padding: 0 1rem 1rem;">
+                                    {{ $pendingUsers->appends(request()->query())->links() }}
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -229,6 +234,11 @@
                                     @endforelse
                                 </tbody>
                             </table>
+                            @if($allUsers->hasPages())
+                                <div style="margin-top: 1rem; padding: 0 1rem 1rem;">
+                                    {{ $allUsers->appends(request()->query())->links() }}
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>

@@ -143,7 +143,7 @@
                                         {{ $announcement->created_at->format('M d, Y') }}
                                     </span>
                                     <div class="announcement-actions">
-                                        <button class="btn btn-secondary btn-sm" onclick="openViewModal('{{ addslashes($announcement->title) }}', '{{ addslashes($announcement->user->first_name) }} {{ addslashes($announcement->user->last_name) }}', '{{ addslashes($announcement->user->role) }}', '{{ addslashes($announcement->content) }}', '{{ $announcement->created_at->format('M d, Y') }}')">
+                                        <button class="btn btn-secondary btn-sm" onclick="openViewModal(this)" data-title="{{ $announcement->title }}" data-author="{{ $announcement->user->first_name }} {{ $announcement->user->last_name }}" data-role="{{ $announcement->user->role }}" data-content="{{ $announcement->content }}" data-date="{{ $announcement->created_at->format('M d, Y') }}">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                                                 <circle cx="12" cy="12" r="3"/>
@@ -171,7 +171,7 @@
                                             </span>
                                         @endif
                                         @if(auth()->user()->role === 'admin' || (auth()->user()->role === 'teacher' && auth()->user()->id === $announcement->user_id))
-                                            <button class="btn btn-warning btn-sm" onclick="openEditModal({{ $announcement->id }}, '{{ addslashes($announcement->title) }}', '{{ addslashes($announcement->content) }}')">
+                                            <button class="btn btn-warning btn-sm" onclick="openEditModal(this)" data-id="{{ $announcement->id }}" data-title="{{ $announcement->title }}" data-content="{{ $announcement->content }}">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                     <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
                                                     <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -203,6 +203,12 @@
                         </div>
                     @endforelse
                 </div>
+
+                @if($announcements->hasPages())
+                    <div style="margin-top: 1.5rem;">
+                        {{ $announcements->appends(request()->query())->links() }}
+                    </div>
+                @endif
             </div>
         </main>
     </div>
@@ -314,7 +320,12 @@
     @endif
 
     <script>
-        function openViewModal(title, author, role, content, date) {
+        function openViewModal(el) {
+            var title = el.dataset.title;
+            var author = el.dataset.author;
+            var role = el.dataset.role;
+            var content = el.dataset.content;
+            var date = el.dataset.date;
             document.getElementById('view_modal_title').textContent = title;
             document.getElementById('view_modal_author').textContent = author;
             document.getElementById('view_modal_role').textContent = role.charAt(0).toUpperCase() + role.slice(1);
@@ -336,7 +347,10 @@
             document.getElementById('addModal').classList.remove('active');
         }
 
-        function openEditModal(id, title, content) {
+        function openEditModal(el) {
+            var id = el.dataset.id;
+            var title = el.dataset.title;
+            var content = el.dataset.content;
             document.getElementById('editForm').action = '/announcements/' + id;
             document.getElementById('edit_title').value = title;
             document.getElementById('edit_content').value = content;

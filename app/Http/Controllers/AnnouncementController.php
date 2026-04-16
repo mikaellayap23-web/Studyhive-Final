@@ -25,15 +25,18 @@ class AnnouncementController extends Controller
             $query->where('user_id', $request->author);
         }
 
-        $announcements = $query->orderBy('created_at', 'desc')
-            ->get()
-            ->map(function ($announcement) {
-                $isOwn = $announcement->user_id === Auth::id();
-                $announcement->is_read = $isOwn || $announcement->reads()
-                    ->where('user_id', Auth::id())
-                    ->exists();
-                return $announcement;
-            });
+        $announcements = $query->orderBy('created_at', 'desc')->paginate(15);
+
+        // Batch load read status for current user
+        $readAnnouncementIds = AnnouncementRead::where('user_id', Auth::id())
+            ->whereIn('announcement_id', $announcements->pluck('id'))
+            ->pluck('announcement_id')
+            ->flip();
+
+        $announcements->each(function ($announcement) use ($readAnnouncementIds) {
+            $isOwn = $announcement->user_id === Auth::id();
+            $announcement->is_read = $isOwn || $readAnnouncementIds->has($announcement->id);
+        });
 
         return view('announcements.index', compact('announcements'));
     }

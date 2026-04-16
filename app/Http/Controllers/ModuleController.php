@@ -76,7 +76,9 @@ class ModuleController extends Controller
         }
 
         // Get all published modules with enrollment status
-        $query = Module::with(['user', 'assignedTeacher'])
+        $query = Module::with(['user', 'assignedTeacher', 'assessment.submissions' => function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            }])
             ->where('status', 'published')
             ->orderBy('order')
             ->orderBy('created_at', 'desc');
@@ -89,28 +91,32 @@ class ModuleController extends Controller
             $query->where('assigned_teacher_id', $request->teacher);
         }
 
-        $modules = $query->get()
-            ->map(function ($module) use ($user) {
-                $module->is_enrolled = Enrollment::where('user_id', $user->id)
-                    ->where('module_id', $module->id)
-                    ->exists();
+        $modules = $query->get();
 
-                // Check if module is completed
-                $progress = ModuleProgress::where('user_id', $user->id)
-                    ->where('module_id', $module->id)
-                    ->first();
-                $progressComplete = $progress && $progress->progress >= 100;
-                $assessmentPassed = true;
-                if ($module->assessment) {
-                    $assessmentPassed = $module->assessment->submissions()
-                        ->where('user_id', $user->id)
-                        ->where('status', 'passed')
-                        ->exists();
-                }
-                $module->is_completed = $progressComplete && $assessmentPassed;
+        // Batch load enrollments and progress for this user
+        $moduleIds = $modules->pluck('id');
+        $enrolledModuleIds = Enrollment::where('user_id', $user->id)
+            ->whereIn('module_id', $moduleIds)
+            ->pluck('module_id')
+            ->flip();
+        $progressByModule = ModuleProgress::where('user_id', $user->id)
+            ->whereIn('module_id', $moduleIds)
+            ->get()
+            ->keyBy('module_id');
 
-                return $module;
-            });
+        $modules->each(function ($module) use ($enrolledModuleIds, $progressByModule) {
+            $module->is_enrolled = $enrolledModuleIds->has($module->id);
+
+            $progress = $progressByModule->get($module->id);
+            $progressComplete = $progress && $progress->progress >= 100;
+            $assessmentPassed = true;
+            if ($module->assessment) {
+                $assessmentPassed = $module->assessment->submissions
+                    ->where('status', 'passed')
+                    ->isNotEmpty();
+            }
+            $module->is_completed = $progressComplete && $assessmentPassed;
+        });
 
         return view('modules.all', compact('modules'));
     }
@@ -140,16 +146,20 @@ class ModuleController extends Controller
             $query->where('title', 'like', "%{$request->search}%");
         }
 
-        $modules = $query->get()
-            ->map(function ($module) use ($user) {
-                // Attach progress data from module_progress table
-                $progress = ModuleProgress::where('user_id', $user->id)
-                    ->where('module_id', $module->id)
-                    ->first();
-                $module->progress = $progress ? $progress->progress : 0;
-                $module->pdf_completed = $progress ? $progress->pdf_completed : false;
-                return $module;
-            });
+        $modules = $query->get();
+
+        // Batch load progress for this user
+        $myModuleIds = $modules->pluck('id');
+        $myProgressByModule = ModuleProgress::where('user_id', $user->id)
+            ->whereIn('module_id', $myModuleIds)
+            ->get()
+            ->keyBy('module_id');
+
+        $modules->each(function ($module) use ($myProgressByModule) {
+            $progress = $myProgressByModule->get($module->id);
+            $module->progress = $progress ? $progress->progress : 0;
+            $module->pdf_completed = $progress ? $progress->pdf_completed : false;
+        });
 
         return view('modules.my', compact('modules'));
     }
@@ -172,7 +182,7 @@ class ModuleController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'], // 5MB max
-            'file' => ['nullable', 'file', 'max:10240'], // 10MB max
+            'file' => ['nullable', 'file', 'mimes:pdf,doc,docx,ppt,pptx,xls,xlsx', 'max:10240'], // 10MB max
             'status' => ['required', 'in:draft,published'],
             'order' => ['required', 'integer', 'min:0'],
             'assigned_teacher_id' => ['nullable', 'exists:users,id'],
@@ -271,7 +281,7 @@ class ModuleController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
-            'file' => ['nullable', 'file', 'max:10240'],
+            'file' => ['nullable', 'file', 'mimes:pdf,doc,docx,ppt,pptx,xls,xlsx', 'max:10240'],
             'status' => ['required', 'in:draft,published'],
             'order' => ['required', 'integer', 'min:0'],
             'assigned_teacher_id' => ['nullable', 'exists:users,id'],
@@ -390,13 +400,16 @@ class ModuleController extends Controller
             ->where('status', 'active')
             ->orderBy('first_name')
             ->orderBy('last_name')
-            ->get()
-            ->map(function ($student) use ($module) {
-                $student->is_enrolled = Enrollment::where('user_id', $student->id)
-                    ->where('module_id', $module->id)
-                    ->exists();
-                return $student;
-            });
+            ->get();
+
+        // Batch load enrollment status
+        $enrolledStudentIds = Enrollment::where('module_id', $module->id)
+            ->pluck('user_id')
+            ->flip();
+
+        $students->each(function ($student) use ($enrolledStudentIds) {
+            $student->is_enrolled = $enrolledStudentIds->has($student->id);
+        });
 
         $enrolledStudents = $module->enrolledStudents()->with('user')->get();
 
