@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AuditTrailController;
 use App\Http\Controllers\AuthController;
@@ -91,6 +92,16 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/assessments/{assessment}/submissions', [AssessmentController::class, 'submissions'])->name('assessments.submissions');
 });
 
+// Certificate Verification (public, no auth)
+Route::get('/certificates/verify', [CertificateController::class, 'verify'])->name('certificates.verify');
+
+// Certificate Routes (auth required)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/certificates', [CertificateController::class, 'index'])->name('certificates.index');
+    Route::get('/certificates/{certificate}', [CertificateController::class, 'show'])->name('certificates.show');
+    Route::get('/certificates/{certificate}/download', [CertificateController::class, 'download'])->name('certificates.download');
+});
+
 // Admin Routes
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     // User Management
@@ -103,4 +114,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     // Audit Trail
     Route::get('/audit-trail', [AuditTrailController::class, 'index'])->name('audit-trail');
+
+    // Certificate Management
+    Route::get('/certificates', [CertificateController::class, 'adminIndex'])->name('certificates.index');
 });

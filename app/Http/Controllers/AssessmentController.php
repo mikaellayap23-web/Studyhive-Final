@@ -307,6 +307,15 @@ class AssessmentController extends Controller
             'submitted_at' => now(),
         ]);
 
+        // Auto-issue certificate if module is now completed
+        if ($status === 'passed') {
+            $certService = app(\App\Services\CertificateService::class);
+            $module = $assessment->module;
+            if ($module && $certService->isModuleCompleted($user, $module)) {
+                $certService->generateCertificate($user, $module);
+            }
+        }
+
         return redirect()->route('assessments.results', $submission->id);
     }
 

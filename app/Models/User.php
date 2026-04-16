@@ -91,6 +91,11 @@ class User extends Authenticatable
         return $this->hasMany(ModuleProgress::class);
     }
 
+    public function certificates()
+    {
+        return $this->hasMany(Certificate::class);
+    }
+
     /**
      * Check if the user is pending approval.
      */
