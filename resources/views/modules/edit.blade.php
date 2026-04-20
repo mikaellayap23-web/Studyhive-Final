@@ -138,10 +138,22 @@
         <!-- Main Content -->
         <main>
             <div class="container">
-                <div class="page-header">
-                    <h1>Edit Module</h1>
-                    <a href="{{ route('modules.index') }}" class="btn btn-secondary">Back to Modules</a>
-                </div>
+                 <div class="page-header">
+                     <h1>Edit Module</h1>
+                     <div style="display: flex; gap: 0.5rem;">
+                         <form action="{{ route('modules.duplicate', $module->id) }}" method="POST" onsubmit="return confirm('Duplicate this module? A new draft copy will be created.')">
+                             @csrf
+                             <button type="submit" class="btn btn-secondary" title="Duplicate module">
+                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 0.25rem;">
+                                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                     <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                                 </svg>
+                                 Duplicate
+                             </button>
+                         </form>
+                         <a href="{{ route('modules.index') }}" class="btn btn-secondary">Back to Modules</a>
+                     </div>
+                 </div>
 
                 <div class="card" style="background: white; border: 1px solid #e2e8e4; border-radius: 8px; padding: 1.5rem;">
                     <form action="{{ route('modules.update', $module->id) }}" method="POST" enctype="multipart/form-data" id="module-form">
@@ -184,19 +196,32 @@
                             @enderror
                         </div>
 
-                        @if(auth()->user()->role === 'admin')
-                            <div class="form-group">
-                                <label for="assigned_teacher_id">Assign to Teacher</label>
-                                <select id="assigned_teacher_id" name="assigned_teacher_id">
-                                    <option value="">-- Select Teacher --</option>
-                                    @foreach($teachers as $teacher)
-                                        <option value="{{ $teacher->id }}" {{ old('assigned_teacher_id', $module->assigned_teacher_id) == $teacher->id ? 'selected' : '' }}>
-                                            {{ $teacher->first_name }} {{ $teacher->last_name }} ({{ $teacher->username }})
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        @endif
+                         @if(auth()->user()->role === 'admin')
+                             <div class="form-group">
+                                 <label for="assigned_teacher_id">Assign to Teacher</label>
+                                 <select id="assigned_teacher_id" name="assigned_teacher_id">
+                                     <option value="">-- Select Teacher --</option>
+                                     @foreach($teachers as $teacher)
+                                         <option value="{{ $teacher->id }}" {{ old('assigned_teacher_id', $module->assigned_teacher_id) == $teacher->id ? 'selected' : '' }}>
+                                             {{ $teacher->first_name }} {{ $teacher->last_name }} ({{ $teacher->username }})
+                                         </option>
+                                     @endforeach
+                                 </select>
+                             </div>
+
+                             <div class="form-group">
+                                 <label for="prerequisite_module_id">Prerequisite Module (Optional)</label>
+                                 <select id="prerequisite_module_id" name="prerequisite_module_id">
+                                     <option value="">-- No Prerequisite --</option>
+                                     @foreach(\App\Models\Module::where('status', 'published')->whereNull('deleted_at')->where('id', '!=', $module->id)->orderBy('title')->get() as $preModule)
+                                         <option value="{{ $preModule->id }}" {{ old('prerequisite_module_id', $module->prerequisite_module_id) == $preModule->id ? 'selected' : '' }}>
+                                             {{ $preModule->title }}
+                                         </option>
+                                     @endforeach
+                                 </select>
+                                 <p class="help-text">Students must complete the selected module before they can enroll in this one.</p>
+                             </div>
+                         @endif
 
                         <div class="form-group">
                             <label>Current File</label>

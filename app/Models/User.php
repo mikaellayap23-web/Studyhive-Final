@@ -53,6 +53,24 @@ class User extends Authenticatable
     }
 
     /**
+     * Generate a unique username from first and last name.
+     */
+    public static function generateUniqueUsername(string $firstName, string $lastName): string
+    {
+        $baseUsername = strtolower(preg_replace('/[^a-z0-9]/', '', $firstName.$lastName));
+        $username = $baseUsername;
+        $counter = 1;
+
+        // Ensure unique username
+        while (static::where('username', $username)->exists()) {
+            $username = $baseUsername.$counter;
+            $counter++;
+        }
+
+        return $username;
+    }
+
+    /**
      * Get the read announcements for the user.
      */
     public function announcementReads()

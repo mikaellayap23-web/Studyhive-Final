@@ -45,20 +45,32 @@
                 <!-- Page Header -->
                 <div class="page-header">
                     <h1>User Management</h1>
-                    <div style="display: flex; gap: 0.5rem;">
-                        <a href="{{ route('admin.users.trash') }}" class="btn btn-secondary">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                            </svg>
-                            Trash
-                        </a>
-                        <button class="btn btn-primary" onclick="openModal()">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M12 5v14M5 12h14"/>
-                            </svg>
-                            Add User
-                        </button>
-                    </div>
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <a href="{{ route('admin.bulk-email.create') }}" class="btn btn-sm btn-primary" title="Send bulk email">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle;">
+                                    <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                                </svg>
+                                Email
+                            </a>
+                            <a href="{{ route('exports.completion') }}" class="btn btn-sm btn-secondary" title="Export completion">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle;">
+                                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 4v12"/>
+                                </svg>
+                                Export
+                            </a>
+                            <a href="{{ route('admin.users.trash') }}" class="btn btn-sm btn-secondary" title="View trash">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle;">
+                                    <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                                Trash
+                            </a>
+                            <button class="btn btn-sm btn-primary" onclick="openModal()" title="Add user">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle;">
+                                    <path d="M12 5v14M5 12h14"/>
+                                </svg>
+                                Add User
+                            </button>
+                        </div>
                 </div>
 
                 <!-- Filters -->

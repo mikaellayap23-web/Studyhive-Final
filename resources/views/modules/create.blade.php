@@ -165,19 +165,32 @@
                             @enderror
                         </div>
 
-                        @if(auth()->user()->role === 'admin')
-                            <div class="form-group">
-                                <label for="assigned_teacher_id">Assign to Teacher</label>
-                                <select id="assigned_teacher_id" name="assigned_teacher_id">
-                                    <option value="">-- Select Teacher --</option>
-                                    @foreach($teachers as $teacher)
-                                        <option value="{{ $teacher->id }}" {{ old('assigned_teacher_id') == $teacher->id ? 'selected' : '' }}>
-                                            {{ $teacher->first_name }} {{ $teacher->last_name }} ({{ $teacher->username }})
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        @endif
+                         @if(auth()->user()->role === 'admin')
+                             <div class="form-group">
+                                 <label for="assigned_teacher_id">Assign to Teacher</label>
+                                 <select id="assigned_teacher_id" name="assigned_teacher_id">
+                                     <option value="">-- Select Teacher --</option>
+                                     @foreach($teachers as $teacher)
+                                         <option value="{{ $teacher->id }}" {{ old('assigned_teacher_id') == $teacher->id ? 'selected' : '' }}>
+                                             {{ $teacher->first_name }} {{ $teacher->last_name }} ({{ $teacher->username }})
+                                         </option>
+                                     @endforeach
+                                 </select>
+                             </div>
+
+                             <div class="form-group">
+                                 <label for="prerequisite_module_id">Prerequisite Module (Optional)</label>
+                                 <select id="prerequisite_module_id" name="prerequisite_module_id">
+                                     <option value="">-- No Prerequisite --</option>
+                                     @foreach(\App\Models\Module::where('status', 'published')->whereNull('deleted_at')->orderBy('title')->get() as $preModule)
+                                         <option value="{{ $preModule->id }}" {{ old('prerequisite_module_id') == $preModule->id ? 'selected' : '' }}>
+                                             {{ $preModule->title }}
+                                         </option>
+                                     @endforeach
+                                 </select>
+                                 <p class="help-text">Students must complete the selected module before they can enroll in this one.</p>
+                             </div>
+                         @endif
 
                         <div class="form-group">
                             <label>Upload File (Optional)</label>

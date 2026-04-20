@@ -99,19 +99,36 @@
                     </p>
                 </div>
 
-                <div class="card" style="background: white; border: 1px solid #e2e8e4; border-radius: 8px; overflow: hidden;">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Student</th>
-                                <th>Attempt</th>
-                                <th>Date Submitted</th>
-                                <th>Score</th>
-                                <th>Percentage</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
+            <div class="card" style="background: white; border: 1px solid #e2e8e4; border-radius: 8px; overflow: hidden;">
+                <div style="padding: 1rem; background: #f8fafc; border-bottom: 1px solid #e2e8e4;">
+                    @php
+                        $totalSubmissions = $submissions->count();
+                        $passedCount = $submissions->where('status', 'passed')->count();
+                        $avgScore = $submissions->avg('percentage');
+                        $highest = $submissions->max('percentage');
+                        $lowest = $submissions->min('percentage');
+                    @endphp
+                    <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; font-size: 0.875rem; color: #475569;">
+                        <div><strong>{{ $totalSubmissions }}</strong> Submissions</div>
+                        <div><strong>{{ $passedCount }}</strong> Passed</div>
+                        <div><strong>{{ number_format($avgScore, 1) }}%</strong> Average</div>
+                        <div><strong>{{ number_format($highest, 1) }}%</strong> Highest</div>
+                        <div><strong>{{ number_format($lowest, 1) }}%</strong> Lowest</div>
+                        <div><strong>{{ $totalSubmissions > 0 ? number_format(($passedCount/$totalSubmissions)*100, 1) : 0 }}%</strong> Pass Rate</div>
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Attempt</th>
+                            <th>Date Submitted</th>
+                            <th>Score</th>
+                            <th>Percentage</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
                         <tbody>
                             @forelse($submissions as $submission)
                                 <tr>
@@ -154,11 +171,17 @@
                             @endforelse
                         </tbody>
                     </table>
-                </div>
+                 </div>
 
-                <div style="margin-top: 1.5rem;">
-                    <a href="{{ route('assessments.index') }}" class="btn btn-secondary">Back to Assessments</a>
-                </div>
+                 <div style="margin-top: 1.5rem; display: flex; gap: 0.75rem;">
+                     <a href="{{ route('exports.assessment.results', $assessment) }}" class="btn btn-secondary">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 0.25rem;">
+                             <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 4v12"/>
+                         </svg>
+                         Export to Excel
+                     </a>
+                     <a href="{{ route('assessments.index') }}" class="btn btn-secondary">Back to Assessments</a>
+                 </div>
             </div>
         </main>
     </div>

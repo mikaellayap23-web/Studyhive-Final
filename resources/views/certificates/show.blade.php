@@ -72,7 +72,14 @@
                         @endif
                     </div>
 
-                    <div style="margin-top: 1.5rem; display: flex; gap: 0.75rem;">
+                     <div style="margin-top: 1.5rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                        <a href="{{ route('certificates.print', $certificate->id) }}" class="btn btn-secondary" target="_blank">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 0.25rem;">
+                                <path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
+                                <path d="M6 14h12v8H6z"/>
+                            </svg>
+                            Print
+                        </a>
                         <a href="{{ route('certificates.download', $certificate) }}" style="padding: 0.625rem 1.25rem; background: #2d5a3d; color: #fff; text-decoration: none; border-radius: 8px; font-size: 0.9rem; font-weight: 500;">
                             Download PDF
                         </a>

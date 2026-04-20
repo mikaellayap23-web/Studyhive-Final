@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Enrollment;
 use App\Models\Module;
 use App\Models\ModuleProgress;
+use App\Services\CertificateService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -18,12 +19,12 @@ class ModuleProgressController extends Controller
         $user = Auth::user();
 
         if ($user->role !== 'student') {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            abort(403, 'Unauthorized');
         }
 
         // Students can only track progress on published modules
         if ($module->status !== 'published') {
-            return response()->json(['success' => false, 'message' => 'Module not available'], 403);
+            abort(403, 'Module not available');
         }
 
         $validated = $request->validate([
@@ -43,7 +44,7 @@ class ModuleProgressController extends Controller
         );
 
         // If total pages not set, save it now
-        if ($progress->pdf_total_pages == 0 && !empty($validated['total_pages'])) {
+        if ($progress->pdf_total_pages == 0 && ! empty($validated['total_pages'])) {
             $progress->pdf_total_pages = $validated['total_pages'];
             $progress->save();
         }
@@ -62,7 +63,7 @@ class ModuleProgressController extends Controller
         // Check if PDF is completed
         $pdfCompleted = ($totalPages > 0 && $viewedCount >= $totalPages);
 
-        if ($pdfCompleted && !$progress->pdf_completed) {
+        if ($pdfCompleted && ! $progress->pdf_completed) {
             $progress->pdf_completed = true;
         }
 
@@ -71,7 +72,7 @@ class ModuleProgressController extends Controller
 
         // Auto-issue certificate if module is now completed
         if ($progress->progress >= 100) {
-            $certService = app(\App\Services\CertificateService::class);
+            $certService = app(CertificateService::class);
             $user = Auth::user();
             if ($certService->isModuleCompleted($user, $module)) {
                 $certService->generateCertificate($user, $module);
@@ -118,14 +119,14 @@ class ModuleProgressController extends Controller
         $user = Auth::user();
 
         if ($user->role !== 'student') {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            abort(403, 'Unauthorized');
         }
 
         $progress = ModuleProgress::where('user_id', $user->id)
             ->where('module_id', $module->id)
             ->first();
 
-        if (!$progress) {
+        if (! $progress) {
             return response()->json([
                 'success' => true,
                 'enrolled' => false,

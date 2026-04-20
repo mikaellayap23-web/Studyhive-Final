@@ -63,16 +63,7 @@ class UserController extends Controller
         $password = ! empty($validated['password']) ? $validated['password'] : $generatedPassword;
 
         // Generate username from first name and last name
-        $baseUsername = strtolower($validated['first_name'].$validated['last_name']);
-        $baseUsername = preg_replace('/[^a-z0-9]/', '', $baseUsername);
-
-        // Ensure unique username
-        $username = $baseUsername;
-        $counter = 1;
-        while (User::where('username', $username)->exists()) {
-            $username = $baseUsername.$counter;
-            $counter++;
-        }
+        $username = User::generateUniqueUsername($validated['first_name'], $validated['last_name']);
 
         $user = User::create([
             'first_name' => $validated['first_name'],

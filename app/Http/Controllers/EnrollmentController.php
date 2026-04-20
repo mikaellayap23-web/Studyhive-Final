@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AssessmentSubmission;
 use App\Models\Enrollment;
 use App\Models\Module;
 use App\Models\ModuleProgress;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class EnrollmentController extends Controller
@@ -22,6 +22,32 @@ class EnrollmentController extends Controller
             abort(403);
         }
 
+        // Check if prerequisite is set and completed
+        if ($module->prerequisite_module_id) {
+            $prerequisite = Module::find($module->prerequisite_module_id);
+            if ($prerequisite) {
+                $prerequisiteProgress = ModuleProgress::where('user_id', $user->id)
+                    ->where('module_id', $prerequisite->id)
+                    ->first();
+
+                $prerequisiteCompleted = $prerequisiteProgress && $prerequisiteProgress->progress >= 100;
+
+                // Also check if assessment passed if exists
+                if ($prerequisite->assessment) {
+                    $passedSubmission = AssessmentSubmission::where('user_id', $user->id)
+                        ->where('assessment_id', $prerequisite->assessment->id)
+                        ->where('status', 'passed')
+                        ->exists();
+                    $prerequisiteCompleted = $prerequisiteCompleted && $passedSubmission;
+                }
+
+                if (! $prerequisiteCompleted) {
+                    return redirect()->route('modules.all')
+                        ->with('error', 'You must complete the prerequisite module: '.$prerequisite->title.' before enrolling in this module.');
+                }
+            }
+        }
+
         // Optimized single query: find any unfinished module the student is enrolled in
         $hasUnfinished = Module::where('status', 'published')
             ->whereHas('enrollments', function ($query) use ($user) {
@@ -34,12 +60,12 @@ class EnrollmentController extends Controller
                         ->where('progress', '<', 100);
                 })
                 // Or module has an assessment that student hasn't passed
-                ->orWhereHas('assessment', function ($q) use ($user) {
-                    $q->whereDoesntHave('submissions', function ($sq) use ($user) {
-                        $sq->where('user_id', $user->id)
-                            ->where('status', 'passed');
+                    ->orWhereHas('assessment', function ($q) use ($user) {
+                        $q->whereDoesntHave('submissions', function ($sq) use ($user) {
+                            $sq->where('user_id', $user->id)
+                                ->where('status', 'passed');
+                        });
                     });
-                });
             })
             ->exists();
 

@@ -1,9 +1,11 @@
 <?php
 
-use App\Http\Middleware\RoleMiddleware;
+use App\Http\Middleware\EnsureUserIsAdmin;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -13,20 +15,19 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'role' => RoleMiddleware::class,
-            'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
+            'admin' => EnsureUserIsAdmin::class,
         ]);
 
-        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+        $middleware->append(SecurityHeaders::class);
 
         // Trust Cloudflare proxy headers so route()/asset()/url() generate HTTPS URLs
         $middleware->trustProxies(
             at: '*',
-            headers: \Illuminate\Http\Request::HEADER_X_FORWARDED_FOR |
-                     \Illuminate\Http\Request::HEADER_X_FORWARDED_HOST |
-                     \Illuminate\Http\Request::HEADER_X_FORWARDED_PORT |
-                     \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO |
-                     \Illuminate\Http\Request::HEADER_X_FORWARDED_AWS_ELB
+            headers: Request::HEADER_X_FORWARDED_FOR |
+                     Request::HEADER_X_FORWARDED_HOST |
+                     Request::HEADER_X_FORWARDED_PORT |
+                     Request::HEADER_X_FORWARDED_PROTO |
+                     Request::HEADER_X_FORWARDED_AWS_ELB
         );
     })
     ->withExceptions(function (Exceptions $exceptions): void {

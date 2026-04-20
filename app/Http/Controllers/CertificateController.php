@@ -10,9 +10,7 @@ use Illuminate\Support\Facades\Storage;
 
 class CertificateController extends Controller
 {
-    public function __construct(private CertificateService $certificateService)
-    {
-    }
+    public function __construct(private CertificateService $certificateService) {}
 
     /**
      * Student: list their certificates.
@@ -55,15 +53,31 @@ class CertificateController extends Controller
         }
 
         // Regenerate PDF if missing
-        if (!$certificate->pdf_path || !Storage::disk('public')->exists($certificate->pdf_path)) {
+        if (! $certificate->pdf_path || ! Storage::disk('public')->exists($certificate->pdf_path)) {
             $this->certificateService->generatePdf($certificate);
             $certificate->refresh();
         }
 
         return Storage::disk('public')->download(
             $certificate->pdf_path,
-            $certificate->certificate_number . '.pdf'
+            $certificate->certificate_number.'.pdf'
         );
+    }
+
+    /**
+     * Print-friendly certificate view.
+     */
+    public function print(Certificate $certificate)
+    {
+        $user = Auth::user();
+
+        if ($user->role !== 'admin' && $certificate->user_id !== $user->id) {
+            abort(403);
+        }
+
+        $certificate->load(['user', 'module.assignedTeacher']);
+
+        return view('certificates.print', compact('certificate'));
     }
 
     /**

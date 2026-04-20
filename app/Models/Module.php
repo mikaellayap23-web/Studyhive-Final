@@ -15,6 +15,7 @@ class Module extends Model
     protected $fillable = [
         'user_id',
         'assigned_teacher_id',
+        'prerequisite_module_id',
         'title',
         'description',
         'image_path',
@@ -33,6 +34,14 @@ class Module extends Model
     public function assignedTeacher(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_teacher_id');
+    }
+
+    /**
+     * Prerequisite module (must be completed before enrolling)
+     */
+    public function prerequisite(): BelongsTo
+    {
+        return $this->belongsTo(Module::class, 'prerequisite_module_id');
     }
 
     public function enrollments(): HasMany

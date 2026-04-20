@@ -4,14 +4,15 @@ use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AuditTrailController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BulkEmailController;
 use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EnrollmentController;
+use App\Http\Controllers\ExportController;
 use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\ModuleProgressController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -23,7 +24,7 @@ Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-Route::post('/register', [AuthController::class, 'register']);
+Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
@@ -65,6 +66,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('/modules/trash/{id}/restore', [ModuleController::class, 'restore'])->name('modules.trash.restore');
     Route::delete('/modules/trash/{id}', [ModuleController::class, 'forceDelete'])->name('modules.trash.forceDelete');
     Route::delete('/modules/trash', [ModuleController::class, 'bulkForceDelete'])->name('modules.trash.bulkForceDelete');
+    Route::post('/modules/{module}/duplicate', [ModuleController::class, 'duplicate'])->name('modules.duplicate');
 });
 
 // Student Module Routes (must be before /modules/{module})
@@ -84,6 +86,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/modules/{module}/progress', [ModuleProgressController::class, 'getProgress'])->name('modules.progress');
 });
 
+// Print Routes (Printable versions)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/modules/{module}/print', [ModuleController::class, 'print'])->name('modules.print');
+    Route::get('/assessments/submissions/{submission}/print', [AssessmentController::class, 'printResults'])->name('assessments.results.print');
+    Route::get('/certificates/{certificate}/print', [CertificateController::class, 'print'])->name('certificates.print');
+});
+
 // Assessment Routes
 Route::middleware(['auth'])->group(function () {
     // Assessment CRUD (Admin/Teacher)
@@ -98,7 +107,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/assessments/{assessment}/take', [AssessmentController::class, 'take'])->name('assessments.take');
     Route::post('/assessments/{assessment}/submit', [AssessmentController::class, 'submit'])->name('assessments.submit');
     Route::get('/assessments/submissions/{submission}', [AssessmentController::class, 'results'])->name('assessments.results');
+    Route::get('/assessments/submissions/{submission}/print', [AssessmentController::class, 'printResults'])->name('assessments.results.print');
     Route::get('/assessments/{assessment}/submissions', [AssessmentController::class, 'submissions'])->name('assessments.submissions');
+
+    // Export assessment results
+    Route::get('/assessments/{assessment}/export', [ExportController::class, 'assessmentResults'])->name('exports.assessment.results');
 });
 
 // Certificate Verification (public, no auth)
@@ -109,6 +122,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/certificates', [CertificateController::class, 'index'])->name('certificates.index');
     Route::get('/certificates/{certificate}', [CertificateController::class, 'show'])->name('certificates.show');
     Route::get('/certificates/{certificate}/download', [CertificateController::class, 'download'])->name('certificates.download');
+    Route::get('/certificates/{certificate}/print', [CertificateController::class, 'print'])->name('certificates.print');
+
+    // Export grades and completion reports
+    Route::get('/exports/grades', [ExportController::class, 'grades'])->name('exports.grades');
+    Route::get('/exports/completion', [ExportController::class, 'completion'])->name('exports.completion');
+    Route::get('/exports/assessment-results/{assessment}', [ExportController::class, 'assessmentResults'])->name('exports.assessment.results');
 });
 
 // Admin Routes
@@ -132,16 +151,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     // Certificate Management
     Route::get('/certificates', [CertificateController::class, 'adminIndex'])->name('certificates.index');
-});
 
-Route::get('/test-mail', function () {
-    try {
-        Mail::raw('Test email from Studyhive', function ($m) {
-            $m->to('studyhive.study@gmail.com')->subject('Test Email');
-        });
-
-        return 'Mail sent successfully!';
-    } catch (Exception $e) {
-        return 'Error: '.$e->getMessage();
-    }
+    // Bulk Email
+    Route::get('/bulk-email', [BulkEmailController::class, 'create'])->name('bulk-email.create');
+    Route::post('/bulk-email', [BulkEmailController::class, 'send'])->name('bulk-email.send');
 });

@@ -123,6 +123,24 @@
                         <span class="notification-badge">{{ $unreadAnnouncementsCount }}</span>
                     @endif
                 </a>
+
+                <!-- Help & Tour -->
+                <button onclick="openHelpModal()" class="nav-link" style="background: none; border: none; width: 100%; text-align: left; cursor: pointer;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                    Help & Tour
+                </button>
+
+                <!-- Dark Mode Toggle -->
+                <button id="darkModeToggle" onclick="toggleDarkMode()" class="nav-link" style="background: none; border: none; width: 100%; text-align: left; cursor: pointer;">
+                    <svg id="darkModeIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+                    </svg>
+                    <span id="darkModeText">Dark Mode</span>
+                </button>
             </div>
 
         <!-- Teacher Menu -->
@@ -165,6 +183,24 @@
                         <span class="notification-badge">{{ $unreadAnnouncementsCount }}</span>
                     @endif
                 </a>
+
+                <!-- Help & Tour -->
+                <button onclick="openHelpModal()" class="nav-link" style="background: none; border: none; width: 100%; text-align: left; cursor: pointer;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                    Help & Tour
+                </button>
+
+                <!-- Dark Mode Toggle -->
+                <button id="darkModeToggle" onclick="toggleDarkMode()" class="nav-link" style="background: none; border: none; width: 100%; text-align: left; cursor: pointer;">
+                    <svg id="darkModeIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+                    </svg>
+                    <span id="darkModeText">Dark Mode</span>
+                </button>
             </div>
 
         <!-- Student Menu -->
@@ -207,6 +243,24 @@
                         <span class="notification-badge">{{ $unreadAnnouncementsCount }}</span>
                     @endif
                 </a>
+
+                <!-- Help & Tour -->
+                <button onclick="openHelpModal()" class="nav-link" style="background: none; border: none; width: 100%; text-align: left; cursor: pointer;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                    Help & Tour
+                </button>
+
+                <!-- Dark Mode Toggle -->
+                <button id="darkModeToggle" onclick="toggleDarkMode()" class="nav-link" style="background: none; border: none; width: 100%; text-align: left; cursor: pointer;">
+                    <svg id="darkModeIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+                    </svg>
+                    <span id="darkModeText">Dark Mode</span>
+                </button>
             </div>
         @endif
     </nav>
@@ -222,14 +276,99 @@
                 Logout
             </button>
         </form>
-    </div>
-</aside>
+     </div>
+  </aside>
 
-<script>
-function toggleDropdown(dropdownId) {
-    const dropdown = document.getElementById(dropdownId);
-    if (dropdown) {
-        dropdown.classList.toggle('open');
-    }
-}
-</script>
+ <!-- Help Modal -->
+ <div id="helpModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center;" onclick="closeHelpModal()">
+     <div style="background: white; max-width: 650px; width: 90%; max-height: 90vh; overflow-y: auto; border-radius: 12px; padding: 2rem; position: relative; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);" onclick="event.stopPropagation()">
+         <button onclick="closeHelpModal()" style="position: absolute; top: 0.75rem; right: 0.75rem; background: none; border: none; font-size: 1.75rem; cursor: pointer; color: #6b7280; line-height: 1;">&times;</button>
+         
+         <h2 style="margin: 0 0 1rem; font-size: 1.5rem; font-weight: 700; color: #1e293b;">📚 Studyhive Help & Tour</h2>
+         
+         <div style="color: #4b5563; line-height: 1.7;">
+             <p style="margin-bottom: 1rem;">Welcome to Studyhive, your Learning Management System for TESDA CSS NC II. Here's a quick tour:</p>
+             
+             <h4 style="margin: 1.5rem 0 0.75rem; color: #1e293b; font-weight: 600;">🎯 For Students</h4>
+             <ul style="margin: 0 0 1rem 1.25rem; padding: 0;">
+                 <li><strong>Enroll in modules:</strong> Browse "All Modules", click enroll. Complete prerequisites first if any.</li>
+                 <li><strong>Study materials:</strong> View PDFs; your progress is tracked automatically.</li>
+                 <li><strong>Take assessments:</strong> After completing a module (100% progress), you can take the assessment. You need to pass to get a certificate.</li>
+                 <li><strong>Certificates:</strong> Automatically issued upon passing both progress and assessment. View under Profile → Certificates.</li>
+             </ul>
+
+             <h4 style="margin: 1.5rem 0 0.75rem; color: #1e293b; font-weight: 600;">👨‍🏫 For Teachers</h4>
+             <ul style="margin: 0 0 1rem 1.25rem; padding: 0;">
+                 <li><strong>Create & manage modules:</strong> Add modules, upload PDFs, set order, assign yourself as teacher.</li>
+                 <li><strong>Create assessments:</strong> Link assessments to your modules with questions, passing scores, and attempts.</li>
+                 <li><strong>Monitor students:</strong> View submissions, grades, and module enrollment.</li>
+                 <li><strong>Export results:</strong> Download Excel reports from the Submissions page.</li>
+             </ul>
+
+             <h4 style="margin: 1.5rem 0 0.75rem; color: #1e293b; font-weight: 600;">🔐 For Admins</h4>
+             <ul style="margin: 0 0 1rem 1.25rem; padding: 0;">
+                 <li><strong>User management:</strong> Approve, reject, create users.</li>
+                 <li><strong>Bulk actions:</strong> Export grades/completion reports, send bulk emails.</li>
+                 <li><strong>All modules & certificates:</strong> Full control over content and approvals.</li>
+                 <li><strong>Audit trail:</strong> Track system activity on your dashboard.</li>
+             </ul>
+
+             <div style="margin-top: 1.5rem; padding: 1rem; background: #f0f9ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                 <strong>💡 Tip:</strong> Use Dark Mode from the sidebar to reduce eye strain during long sessions!
+             </div>
+
+             <p style="margin-top: 1rem;"><em>Need more help? Contact your system administrator.</em></p>
+         </div>
+
+         <div style="text-align: right; margin-top: 1.5rem;">
+             <button onclick="closeHelpModal()" class="btn btn-primary">Got it!</button>
+         </div>
+     </div>
+ </div>
+
+ <!-- Dark Mode Toggle Script -->
+ <script>
+ function toggleDropdown(dropdownId) {
+     const dropdown = document.getElementById(dropdownId);
+     if (dropdown) {
+         dropdown.classList.toggle('open');
+     }
+ }
+
+ function toggleDarkMode() {
+     const html = document.documentElement;
+     const isDark = html.classList.toggle('dark-mode');
+     localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+     updateDarkModeIcon(isDark);
+ }
+
+ function updateDarkModeIcon(isDark) {
+     const icon = document.getElementById('darkModeIcon');
+     const text = document.getElementById('darkModeText');
+     if (isDark) {
+         icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />';
+         text.textContent = 'Light Mode';
+     } else {
+         icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />';
+         text.textContent = 'Dark Mode';
+     }
+ }
+
+ // Load saved preference
+ (function() {
+     const saved = localStorage.getItem('darkMode');
+     const html = document.documentElement;
+     if (saved === 'enabled') {
+         html.classList.add('dark-mode');
+         updateDarkModeIcon(true);
+     }
+ })();
+
+ function openHelpModal() {
+     document.getElementById('helpModal').style.display = 'flex';
+ }
+
+ function closeHelpModal() {
+     document.getElementById('helpModal').style.display = 'none';
+ }
+ </script>

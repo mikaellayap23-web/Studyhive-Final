@@ -289,85 +289,6 @@ class AssessmentController extends Controller
     }
 
     /**
-     * Submit the assessment (legacy method - uses inline grading).
-     *
-     * @deprecated Use submit() instead which uses GradeService.
-     */
-    public function submitLegacy(Request $request, Assessment $assessment)
-    {
-        /** @var User $user */
-        $user = Auth::user();
-
-        // Only students can submit assessments
-        if ($user->role !== 'student') {
-            abort(403);
-        }
-
-        // Check if student has attempts remaining
-        if (! $assessment->canUserTake($user)) {
-            return redirect()->route('assessments.results', $assessment->latestSubmission($user)->id)
-                ->with('error', 'You have used all your attempts for this assessment.');
-        }
-
-        $validated = $request->validate([
-            'answers' => ['required', 'array'],
-        ]);
-
-        // Calculate score using original questions (server stores correct answer indices)
-        $questions = $assessment->questions;
-        $answers = $validated['answers'];
-        $totalPoints = 0;
-        $score = 0;
-
-        foreach ($questions as $question) {
-            $questionPoints = $question['points'] ?? 1;
-            $totalPoints += $questionPoints;
-
-            if (isset($answers[$question['id']]) && $answers[$question['id']] === $question['correct_answer']) {
-                $score += $questionPoints;
-            }
-        }
-
-        // Calculate percentage
-        $percentage = $totalPoints > 0 ? ($score / $totalPoints) * 100 : 0;
-
-        // Determine status
-        $status = 'graded';
-        if ($percentage >= $assessment->passing_score) {
-            $status = 'passed';
-        } else {
-            $status = 'failed';
-        }
-
-        // Get next attempt number
-        $attemptNumber = AssessmentSubmission::getNextAttemptNumber($assessment->id, $user->id);
-
-        // Create submission
-        $submission = AssessmentSubmission::create([
-            'assessment_id' => $assessment->id,
-            'user_id' => $user->id,
-            'attempt_number' => $attemptNumber,
-            'answers' => $answers,
-            'score' => $score,
-            'total_points' => $totalPoints,
-            'percentage' => $percentage,
-            'status' => $status,
-            'submitted_at' => now(),
-        ]);
-
-        // Auto-issue certificate if module is now completed
-        if ($status === 'passed') {
-            $certService = app(CertificateService::class);
-            $module = $assessment->module;
-            if ($module && $certService->isModuleCompleted($user, $module)) {
-                $certService->generateCertificate($user, $module);
-            }
-        }
-
-        return redirect()->route('assessments.results', $submission->id);
-    }
-
-    /**
      * Show assessment results.
      */
     public function results(AssessmentSubmission $submission)
@@ -381,6 +302,24 @@ class AssessmentController extends Controller
         }
 
         return view('assessments.results', compact('submission'));
+    }
+
+    /**
+     * Print-friendly assessment results.
+     */
+    public function printResults(AssessmentSubmission $submission)
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        // Only the student who submitted or admin/teacher can view results
+        if ($user->id !== $submission->user_id && $user->role !== 'admin' && $user->role !== 'teacher') {
+            abort(403);
+        }
+
+        $submission->load(['assessment.questions', 'user', 'assessment.module']);
+
+        return view('assessments.print-results', compact('submission'));
     }
 
     /**

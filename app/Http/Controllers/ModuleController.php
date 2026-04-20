@@ -249,6 +249,7 @@ class ModuleController extends Controller
             'status' => ['required', 'in:draft,published'],
             'order' => ['required', 'integer', 'min:0'],
             'assigned_teacher_id' => ['nullable', 'exists:users,id'],
+            'prerequisite_module_id' => ['nullable', 'exists:modules,id'],
             'create_assessment' => ['nullable', 'in:0,1'],
             'assessment' => ['nullable', 'array'],
             'assessment.title' => ['required_if:create_assessment,1', 'string', 'max:255'],
@@ -266,6 +267,7 @@ class ModuleController extends Controller
             'description' => $validated['description'] ?? null,
             'status' => $validated['status'],
             'order' => $validated['order'],
+            'prerequisite_module_id' => $validated['prerequisite_module_id'] ?? null,
         ];
 
         // Only assign teacher if admin is creating and selected a teacher
@@ -353,6 +355,7 @@ class ModuleController extends Controller
                 'status' => ['required', 'in:draft,published'],
                 'order' => ['required', 'integer', 'min:0'],
                 'assigned_teacher_id' => ['nullable', 'exists:users,id'],
+                'prerequisite_module_id' => ['nullable', 'exists:modules,id'],
                 'update_assessment' => ['required', 'in:1'],
                 'assessment' => ['required', 'array'],
                 'assessment.title' => ['required', 'string', 'max:255'],
@@ -369,6 +372,7 @@ class ModuleController extends Controller
                 'description' => $validated['description'] ?? null,
                 'status' => $validated['status'],
                 'order' => $validated['order'],
+                'prerequisite_module_id' => $validated['prerequisite_module_id'] ?? null,
             ];
 
             // Only admin can assign/change teacher
@@ -432,6 +436,7 @@ class ModuleController extends Controller
             'status' => ['required', 'in:draft,published'],
             'order' => ['required', 'integer', 'min:0'],
             'assigned_teacher_id' => ['nullable', 'exists:users,id'],
+            'prerequisite_module_id' => ['nullable', 'exists:modules,id'],
         ]);
 
         $data = [
@@ -439,6 +444,7 @@ class ModuleController extends Controller
             'description' => $validated['description'] ?? null,
             'status' => $validated['status'],
             'order' => $validated['order'],
+            'prerequisite_module_id' => $validated['prerequisite_module_id'] ?? null,
         ];
 
         // Only admin can assign/change teacher
@@ -465,6 +471,70 @@ class ModuleController extends Controller
         $module->update($data);
 
         return redirect()->route('modules.index')->with('success', 'Module updated successfully!');
+    }
+
+    /**
+     * Duplicate an existing module.
+     */
+    public function duplicate(Module $module)
+    {
+        $currentUser = Auth::user();
+
+        // Only admin or assigned teacher can duplicate
+        if (! $module->canManage($currentUser)) {
+            abort(403, 'You do not have permission to duplicate this module.');
+        }
+
+        // Begin transaction
+        \DB::beginTransaction();
+
+        try {
+            // Create new module with copied data
+            $newModule = $module->replicate();
+            $newModule->title = $module->title.' (Copy)';
+            $newModule->status = 'draft'; // Always draft for duplicates
+            $newModule->user_id = Auth::id();
+            $newModule->assigned_teacher_id = $module->assigned_teacher_id; // Keep same teacher
+            $newModule->prerequisite_module_id = $module->prerequisite_module_id; // Keep same prerequisite
+            $newModule->save();
+
+            // Duplicate image if exists
+            if ($module->image_path && Storage::disk('public')->exists($module->image_path)) {
+                $ext = pathinfo($module->image_path, PATHINFO_EXTENSION);
+                $newImagePath = 'modules/images/'.uniqid().'_'.time().'.'.$ext;
+                Storage::disk('public')->copy($module->image_path, $newImagePath);
+                $newModule->image_path = $newImagePath;
+                $newModule->save();
+            }
+
+            // Duplicate file if exists
+            if ($module->file_path && Storage::disk('public')->exists($module->file_path)) {
+                $ext = pathinfo($module->file_path, PATHINFO_EXTENSION);
+                $newFilePath = 'modules/'.uniqid().'_'.time().'.'.$ext;
+                Storage::disk('public')->copy($module->file_path, $newFilePath);
+                $newModule->file_path = $newFilePath;
+                $newModule->save();
+            }
+
+            // Duplicate assessment if exists
+            if ($module->assessment) {
+                $newAssessment = $module->assessment->replicate();
+                $newAssessment->module_id = $newModule->id;
+                $newAssessment->created_by = Auth::id();
+                $newAssessment->save();
+            }
+
+            \DB::commit();
+
+            return redirect()->route('modules.edit', $newModule->id)
+                ->with('success', 'Module duplicated successfully! You can now edit the new copy.');
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            \Log::error('Module duplication failed: '.$e->getMessage());
+
+            return redirect()->back()
+                ->with('error', 'Failed to duplicate module. Please try again.');
+        }
     }
 
     /**
@@ -717,7 +787,7 @@ class ModuleController extends Controller
     }
 
     /**
-     * View a specific module.
+     * Display a specific module.
      */
     public function show(Module $module)
     {
@@ -763,5 +833,40 @@ class ModuleController extends Controller
         }
 
         return view('modules.show', compact('module', 'isEnrolled', 'enrollment', 'moduleProgress', 'moduleCompleted'));
+    }
+
+    /**
+     * Print-friendly module summary.
+     */
+    public function print(Module $module)
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        // Students can only view published modules
+        if ($user->role === 'student' && $module->status !== 'published') {
+            abort(403);
+        }
+
+        // Load relationships
+        $module->load(['assessment.submissions' => function ($q) use ($user) {
+            $q->where('user_id', $user->id);
+        }, 'assignedTeacher']);
+
+        $enrollment = null;
+        $progress = null;
+        if ($user->role === 'student') {
+            $enrollment = Enrollment::where('user_id', $user->id)
+                ->where('module_id', $module->id)
+                ->first();
+
+            if ($enrollment) {
+                $progress = ModuleProgress::where('user_id', $user->id)
+                    ->where('module_id', $module->id)
+                    ->first();
+            }
+        }
+
+        return view('modules.print', compact('module', 'enrollment', 'progress'));
     }
 }

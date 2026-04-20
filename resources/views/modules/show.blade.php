@@ -322,22 +322,34 @@
                                 </p>
                             @else
                                 <p>{{ $module->content ?? 'No content available for this module.' }}</p>
-                            @endif
-                        </div>
-                    </div>
+                             @endif
+                         </div>
+                     </div>
 
-                    <!-- Module Materials / PDF Viewer -->
-                    @if($module->file_path)
-                        <div class="module-detail-body">
-                            <div class="module-detail-section">
-                                <h3>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
-                                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                                        <polyline points="14 2 14 8 20 8"/>
-                                    </svg>
-                                    Module Materials
-                                </h3>
-                                @if(auth()->user()->role === 'student' && !$isEnrolled)
+                     @if($module->prerequisite)
+                         <div class="module-detail-body" style="background: #fef3c7; border-color: #fcd34d;">
+                             <div class="module-detail-section">
+                                 <h3 style="color: #92400e; display: flex; align-items: center; gap: 0.5rem;">
+                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                         <circle cx="12" cy="12" r="10"/>
+                                         <line x1="12" y1="8" x2="12" y2="12"/>
+                                         <line x1="12" y1="16" x2="12.01" y2="16"/>
+                                     </svg>
+                                     Prerequisite Required
+                                 </h3>
+                                 <p style="color: #78350f;">
+                                     You must complete <strong>{{ $module->prerequisite->title }}</strong> before you can enroll in this module.
+                                     @if($isEnrolled)
+                                         <span style="display: block; margin-top: 0.5rem; color: #b45309;">
+                                             ⚠️ You are enrolled but missing the prerequisite. Contact your instructor if you believe this is an error.
+                                         </span>
+                                     @endif
+                                 </p>
+                             </div>
+                         </div>
+                     @endif
+
+                     @if(auth()->user()->role === 'student' && !$isEnrolled)
                                     <p style="color: #718096; font-size: 0.875rem;">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 0.25rem;">
                                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
@@ -564,9 +576,20 @@
                                                         </svg>
                                                         View Submissions
                                                     </a>
-                                                </div>
-                                            </div>
-                                        </div>
+                         </div>
+                     </div>
+                     @if(auth()->user()->role === 'student' && $isEnrolled)
+                         <div style="margin-top: 1rem; text-align: right;">
+                             <a href="{{ route('modules.print', $module->id) }}" class="btn btn-secondary btn-sm" target="_blank">
+                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 0.25rem;">
+                                     <path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
+                                     <path d="M6 14h12v8H6z"/>
+                                 </svg>
+                                 Print Summary
+                             </a>
+                         </div>
+                     @endif
+                 </div>
                                     @else
                                         <p style="color: #64748b; font-style: italic;">No assessment created for this module yet.</p>
                                     @endif
@@ -606,7 +629,11 @@
         };
 
         // Load existing progress
-        fetch(`{{ route('modules.progress', $module->id) }}`)
+        fetch(`{{ route('modules.progress', $module->id) }}`, {
+            headers: {
+                'Accept': 'application/json',
+            }
+        })
             .then(response => response.json())
             .then(data => {
                 if (data.success && data.enrolled) {
@@ -743,6 +770,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
                 body: JSON.stringify({

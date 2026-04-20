@@ -84,15 +84,7 @@ class AuthController extends Controller
         ]);
 
         // Generate unique username from first name and last name
-        $baseUsername = strtolower(preg_replace('/[^a-z0-9]/', '', $validated['first_name'].$validated['last_name']));
-        $username = $baseUsername;
-        $counter = 1;
-
-        // Ensure unique username
-        while (User::where('username', $username)->exists()) {
-            $username = $baseUsername.$counter;
-            $counter++;
-        }
+        $username = User::generateUniqueUsername($validated['first_name'], $validated['last_name']);
 
         $user = User::create([
             'first_name' => $validated['first_name'],
