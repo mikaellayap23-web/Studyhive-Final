@@ -14,13 +14,13 @@ class ProfileController extends Controller
     /**
      * Show the profile page.
      */
-    public function show()
+    public function show(Request $request)
     {
         $auditEntries = [];
         $logPath = storage_path('logs/audit.log');
+        $user = Auth::user();
 
         if (File::exists($logPath)) {
-            $user = Auth::user();
             $lines = File::lines($logPath);
             foreach ($lines as $line) {
                 $data = json_decode($line, true);
@@ -29,7 +29,27 @@ class ProfileController extends Controller
                 }
             }
             $auditEntries = array_reverse($auditEntries);
-            $auditEntries = array_slice($auditEntries, 0, 20);
+
+            // Apply filters
+            if ($request->filled('action')) {
+                $auditEntries = array_filter($auditEntries, function ($entry) use ($request) {
+                    return strtolower($entry['action']) === strtolower($request->action);
+                });
+            }
+
+            if ($request->filled('date_from')) {
+                $auditEntries = array_filter($auditEntries, function ($entry) use ($request) {
+                    return isset($entry['timestamp']) && $entry['timestamp'] >= $request->date_from;
+                });
+            }
+
+            if ($request->filled('date_to')) {
+                $auditEntries = array_filter($auditEntries, function ($entry) use ($request) {
+                    return isset($entry['timestamp']) && $entry['timestamp'] <= $request->date_to.' 23:59:59';
+                });
+            }
+
+            $auditEntries = array_slice($auditEntries, 0, 50);
         }
 
         return view('pages.profile', compact('auditEntries'));
@@ -43,9 +63,12 @@ class ProfileController extends Controller
         $user = Auth::user();
 
         $validated = $request->validate([
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
+            'first_name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
+            'last_name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
             'username' => ['nullable', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
+        ], [
+            'first_name.regex' => 'The first name field should only contain letters.',
+            'last_name.regex' => 'The last name field should only contain letters.',
         ]);
 
         $user->update($validated);
@@ -66,7 +89,7 @@ class ProfileController extends Controller
         ]);
 
         // Check if current password is correct
-        if (!Hash::check($validated['current_password'], $user->password)) {
+        if (! Hash::check($validated['current_password'], $user->password)) {
             return back()->withErrors([
                 'current_password' => 'The current password is incorrect.',
             ]);

@@ -45,12 +45,20 @@
                 <!-- Page Header -->
                 <div class="page-header">
                     <h1>User Management</h1>
-                    <button class="btn btn-primary" onclick="openModal()">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 5v14M5 12h14"/>
-                        </svg>
-                        Add User
-                    </button>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <a href="{{ route('admin.users.trash') }}" class="btn btn-secondary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                            Trash
+                        </a>
+                        <button class="btn btn-primary" onclick="openModal()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 5v14M5 12h14"/>
+                            </svg>
+                            Add User
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Filters -->
@@ -155,12 +163,12 @@
                                     @endforelse
                                 </tbody>
                             </table>
-                            @if($pendingUsers->hasPages())
-                                <div style="margin-top: 1rem; padding: 0 1rem 1rem;">
-                                    {{ $pendingUsers->appends(request()->query())->links() }}
-                                </div>
-                            @endif
                         </div>
+                        @if($pendingUsers->hasPages())
+                            <div class="pagination-wrapper">
+                                {{ $pendingUsers->appends(request()->query())->links() }}
+                            </div>
+                        @endif
                     </div>
                 </div>
 
@@ -235,7 +243,7 @@
                                 </tbody>
                             </table>
                             @if($allUsers->hasPages())
-                                <div style="margin-top: 1rem; padding: 0 1rem 1rem;">
+                                <div class="pagination-wrapper">
                                     {{ $allUsers->appends(request()->query())->links() }}
                                 </div>
                             @endif
@@ -263,11 +271,11 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="first_name">First Name</label>
-                            <input type="text" id="first_name" name="first_name" required>
+                            <input type="text" id="first_name" name="first_name" required pattern="[a-zA-Z\s]+" title="Only letters and spaces are allowed">
                         </div>
                         <div class="form-group">
                             <label for="last_name">Last Name</label>
-                            <input type="text" id="last_name" name="last_name" required>
+                            <input type="text" id="last_name" name="last_name" required pattern="[a-zA-Z\s]+" title="Only letters and spaces are allowed">
                         </div>
                     </div>
 
@@ -317,11 +325,11 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="edit_first_name">First Name</label>
-                            <input type="text" id="edit_first_name" name="first_name" required>
+                            <input type="text" id="edit_first_name" name="first_name" required pattern="[a-zA-Z\s]+" title="Only letters and spaces are allowed">
                         </div>
                         <div class="form-group">
                             <label for="edit_last_name">Last Name</label>
-                            <input type="text" id="edit_last_name" name="last_name" required>
+                            <input type="text" id="edit_last_name" name="last_name" required pattern="[a-zA-Z\s]+" title="Only letters and spaces are allowed">
                         </div>
                     </div>
 

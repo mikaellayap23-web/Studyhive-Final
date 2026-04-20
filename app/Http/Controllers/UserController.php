@@ -31,8 +31,8 @@ class UserController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', "%{$search}%")
-                  ->orWhere('last_name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
@@ -48,20 +48,36 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
+            'first_name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
+            'last_name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['nullable', 'string', 'min:8'],
             'role' => ['required', 'in:admin,teacher,student'],
+        ], [
+            'first_name.regex' => 'The first name field should only contain letters.',
+            'last_name.regex' => 'The last name field should only contain letters.',
         ]);
 
         // Generate password if not provided
         $generatedPassword = Str::random(10);
-        $password = !empty($validated['password']) ? $validated['password'] : $generatedPassword;
+        $password = ! empty($validated['password']) ? $validated['password'] : $generatedPassword;
+
+        // Generate username from first name and last name
+        $baseUsername = strtolower($validated['first_name'].$validated['last_name']);
+        $baseUsername = preg_replace('/[^a-z0-9]/', '', $baseUsername);
+
+        // Ensure unique username
+        $username = $baseUsername;
+        $counter = 1;
+        while (User::where('username', $username)->exists()) {
+            $username = $baseUsername.$counter;
+            $counter++;
+        }
 
         $user = User::create([
             'first_name' => $validated['first_name'],
             'last_name' => $validated['last_name'],
+            'username' => $username,
             'email' => $validated['email'],
             'password' => Hash::make($password),
             'role' => $validated['role'],
@@ -101,7 +117,7 @@ class UserController extends Controller
         AuditTrailController::log(
             'Approved',
             "User: {$user->first_name} {$user->last_name} ({$user->email})",
-            "Status changed from pending to active"
+            'Status changed from pending to active'
         );
 
         return redirect()->route('admin.users.index')->with('success', 'User approved successfully! An email notification has been sent.');
@@ -120,7 +136,7 @@ class UserController extends Controller
         AuditTrailController::log(
             'Rejected',
             "User: {$userName}",
-            "Pending user rejected and removed"
+            'Pending user rejected and removed'
         );
 
         return redirect()->route('admin.users.index')->with('success', 'User rejected successfully!');
@@ -132,11 +148,14 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $validated = $request->validate([
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
+            'first_name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
+            'last_name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'role' => ['required', 'in:admin,teacher,student'],
             'status' => ['required', 'in:active,suspended'],
+        ], [
+            'first_name.regex' => 'The first name field should only contain letters.',
+            'last_name.regex' => 'The last name field should only contain letters.',
         ]);
 
         // Track what changed for audit
@@ -160,7 +179,7 @@ class UserController extends Controller
         $user->update($validated);
 
         // Audit log
-        if (!empty($changes)) {
+        if (! empty($changes)) {
             AuditTrailController::log(
                 'Updated',
                 "User: {$user->first_name} {$user->last_name} ({$user->email})",
@@ -189,5 +208,87 @@ class UserController extends Controller
         );
 
         return redirect()->route('admin.users.index')->with('success', 'User deleted successfully!');
+    }
+
+    /**
+     * Display trashed users.
+     */
+    public function trashed(Request $request)
+    {
+        $query = User::onlyTrashed();
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $users = $query->orderBy('deleted_at', 'desc')->paginate(15);
+
+        return view('admin.user_trash', compact('users'));
+    }
+
+    /**
+     * Restore a trashed user.
+     */
+    public function restore($id)
+    {
+        $user = User::onlyTrashed()->findOrFail($id);
+        $userName = "{$user->first_name} {$user->last_name}";
+
+        $user->restore();
+
+        AuditTrailController::log(
+            'Restored',
+            "User: {$userName}",
+            'Restored from trash'
+        );
+
+        return redirect()->route('admin.users.trash')->with('success', 'User restored successfully!');
+    }
+
+    /**
+     * Bulk restore trashed users.
+     */
+    public function bulkRestore(Request $request)
+    {
+        $validated = $request->validate([
+            'user_ids' => ['required', 'array'],
+            'user_ids.*' => ['exists:users,id'],
+        ]);
+
+        $count = User::onlyTrashed()
+            ->whereIn('id', $validated['user_ids'])
+            ->restore();
+
+        AuditTrailController::log(
+            'Restored',
+            "{$count} user(s) restored",
+            'Bulk restore from trash'
+        );
+
+        return redirect()->route('admin.users.trash')->with('success', "{$count} user(s) restored successfully!");
+    }
+
+    /**
+     * Permanently delete a trashed user.
+     */
+    public function forceDelete($id)
+    {
+        $user = User::onlyTrashed()->findOrFail($id);
+        $userName = "{$user->first_name} {$user->last_name}";
+
+        $user->forceDelete();
+
+        AuditTrailController::log(
+            'Permanently Deleted',
+            "User: {$userName}",
+            'Permanently deleted from trash'
+        );
+
+        return redirect()->route('admin.users.trash')->with('success', 'User permanently deleted!');
     }
 }

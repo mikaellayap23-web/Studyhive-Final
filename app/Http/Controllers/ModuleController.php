@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Storage;
 class ModuleController extends Controller
 {
     /**
-     * Display modules.
+     * Display modules (excluding trashed).
      */
     public function index(Request $request)
     {
@@ -22,8 +22,8 @@ class ModuleController extends Controller
         $user = Auth::user();
 
         if ($user->role === 'admin') {
-            // Admin sees all modules
-            $query = Module::with(['user', 'assignedTeacher']);
+            // Admin sees all non-trashed modules
+            $query = Module::withoutTrashed()->with(['user', 'assignedTeacher']);
 
             // Apply filters
             if ($request->filled('search')) {
@@ -38,8 +38,8 @@ class ModuleController extends Controller
 
             $modules = $query->orderBy('order')->orderBy('created_at', 'desc')->get();
         } elseif ($user->role === 'teacher') {
-            // Teacher sees ALL modules (to view what others have) but can only manage their assigned ones
-            $query = Module::with(['user', 'assignedTeacher']);
+            // Teacher sees all non-trashed modules
+            $query = Module::withoutTrashed()->with(['user', 'assignedTeacher']);
 
             // Apply filters
             if ($request->filled('search')) {
@@ -51,8 +51,8 @@ class ModuleController extends Controller
 
             $modules = $query->orderBy('order')->orderBy('created_at', 'desc')->get();
         } else {
-            // Student sees only published modules
-            $query = Module::with(['user', 'assignedTeacher'])->where('status', 'published');
+            // Student sees only published non-trashed modules
+            $query = Module::withoutTrashed()->with(['user', 'assignedTeacher'])->where('status', 'published');
 
             if ($request->filled('search')) {
                 $query->where('title', 'like', "%{$request->search}%");
@@ -65,101 +65,163 @@ class ModuleController extends Controller
     }
 
     /**
-     * Display all available modules for students (for enrollment).
+     * Display available modules based on role:
+     * - Student: all published modules (for enrollment)
+     * - Teacher: modules they're assigned to or created
+     * - Admin: all modules with full control
      */
     public function allModules(Request $request)
     {
+        /** @var User $user */
         $user = Auth::user();
 
-        if ($user->role !== 'student') {
-            return redirect()->route('modules.index');
-        }
+        if ($user->role === 'student') {
+            // Get all published modules that are NOT trashed
+            $query = Module::withoutTrashed()
+                ->with(['user', 'assignedTeacher', 'assessment.submissions' => function ($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                }])
+                ->where('status', 'published')
+                ->orderBy('order')
+                ->orderBy('created_at', 'desc');
 
-        // Get all published modules with enrollment status
-        $query = Module::with(['user', 'assignedTeacher', 'assessment.submissions' => function ($q) use ($user) {
-                $q->where('user_id', $user->id);
-            }])
-            ->where('status', 'published')
-            ->orderBy('order')
-            ->orderBy('created_at', 'desc');
-
-        // Apply filters
-        if ($request->filled('search')) {
-            $query->where('title', 'like', "%{$request->search}%");
-        }
-        if ($request->filled('teacher')) {
-            $query->where('assigned_teacher_id', $request->teacher);
-        }
-
-        $modules = $query->get();
-
-        // Batch load enrollments and progress for this user
-        $moduleIds = $modules->pluck('id');
-        $enrolledModuleIds = Enrollment::where('user_id', $user->id)
-            ->whereIn('module_id', $moduleIds)
-            ->pluck('module_id')
-            ->flip();
-        $progressByModule = ModuleProgress::where('user_id', $user->id)
-            ->whereIn('module_id', $moduleIds)
-            ->get()
-            ->keyBy('module_id');
-
-        $modules->each(function ($module) use ($enrolledModuleIds, $progressByModule) {
-            $module->is_enrolled = $enrolledModuleIds->has($module->id);
-
-            $progress = $progressByModule->get($module->id);
-            $progressComplete = $progress && $progress->progress >= 100;
-            $assessmentPassed = true;
-            if ($module->assessment) {
-                $assessmentPassed = $module->assessment->submissions
-                    ->where('status', 'passed')
-                    ->isNotEmpty();
+            if ($request->filled('search')) {
+                $query->where('title', 'like', "%{$request->search}%");
             }
-            $module->is_completed = $progressComplete && $assessmentPassed;
-        });
+            if ($request->filled('teacher')) {
+                $query->where('assigned_teacher_id', $request->teacher);
+            }
+
+            $modules = $query->get();
+
+            $moduleIds = $modules->pluck('id');
+            $enrolledModuleIds = Enrollment::where('user_id', $user->id)
+                ->whereIn('module_id', $moduleIds)
+                ->pluck('module_id')
+                ->flip();
+            $progressByModule = ModuleProgress::where('user_id', $user->id)
+                ->whereIn('module_id', $moduleIds)
+                ->get()
+                ->keyBy('module_id');
+
+            $modules->each(function ($module) use ($enrolledModuleIds, $progressByModule) {
+                $module->is_enrolled = $enrolledModuleIds->has($module->id);
+
+                $progress = $progressByModule->get($module->id);
+                $progressComplete = $progress && $progress->progress >= 100;
+                $assessmentPassed = true;
+                if ($module->assessment) {
+                    $assessmentPassed = $module->assessment->submissions
+                        ->where('status', 'passed')
+                        ->isNotEmpty();
+                }
+                $module->is_completed = $progressComplete && $assessmentPassed;
+            });
+        } elseif ($user->role === 'teacher') {
+            // Teacher sees ALL modules (view-only unless assigned/created)
+            $query = Module::withoutTrashed()
+                ->with(['user', 'assignedTeacher']);
+
+            if ($request->filled('search')) {
+                $query->where('title', 'like', "%{$request->search}%");
+            }
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+
+            $modules = $query->orderBy('order')->orderBy('created_at', 'desc')->get();
+        } else {
+            // Admin sees all modules with full control
+            $query = Module::withoutTrashed()->with(['user', 'assignedTeacher']);
+
+            if ($request->filled('search')) {
+                $query->where('title', 'like', "%{$request->search}%");
+            }
+            if ($request->filled('teacher')) {
+                $query->where('assigned_teacher_id', $request->teacher);
+            }
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+
+            $modules = $query->orderBy('order')->orderBy('created_at', 'desc')->get();
+        }
 
         return view('modules.all', compact('modules'));
     }
 
     /**
-     * Display student's enrolled modules.
+     * Display modules based on role:
+     * - Admin: all modules (full control)
+     * - Teacher: modules they're assigned to or created
+     * - Student: modules they're enrolled in
      */
     public function myModules(Request $request)
     {
+        /** @var User $user */
         $user = Auth::user();
 
-        if ($user->role !== 'student') {
-            return redirect()->route('modules.index');
+        if ($user->role === 'admin') {
+            // Admin sees all non-trashed modules
+            $query = Module::withoutTrashed()->with(['user', 'assignedTeacher']);
+
+            if ($request->filled('search')) {
+                $query->where('title', 'like', "%{$request->search}%");
+            }
+            if ($request->filled('teacher')) {
+                $query->where('assigned_teacher_id', $request->teacher);
+            }
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+
+            $modules = $query->orderBy('order')->orderBy('created_at', 'desc')->get();
+        } elseif ($user->role === 'teacher') {
+            // Teacher sees only modules they're assigned to or created
+            $query = Module::withoutTrashed()
+                ->with(['user', 'assignedTeacher'])
+                ->where(function ($q) use ($user) {
+                    $q->where('assigned_teacher_id', $user->id)
+                        ->orWhere('user_id', $user->id);
+                });
+
+            if ($request->filled('search')) {
+                $query->where('title', 'like', "%{$request->search}%");
+            }
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+
+            $modules = $query->orderBy('order')->orderBy('created_at', 'desc')->get();
+        } else {
+            // Student sees modules they're enrolled in
+            $query = Module::withoutTrashed()
+                ->with(['user', 'assignedTeacher'])
+                ->where('status', 'published')
+                ->whereHas('enrollments', function ($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                })
+                ->orderBy('order')
+                ->orderBy('created_at', 'desc');
+
+            if ($request->filled('search')) {
+                $query->where('title', 'like', "%{$request->search}%");
+            }
+
+            $modules = $query->get();
+
+            $myModuleIds = $modules->pluck('id');
+            $myProgressByModule = ModuleProgress::where('user_id', $user->id)
+                ->whereIn('module_id', $myModuleIds)
+                ->get()
+                ->keyBy('module_id');
+
+            $modules->each(function ($module) use ($myProgressByModule) {
+                $progress = $myProgressByModule->get($module->id);
+                $module->progress = $progress ? $progress->progress : 0;
+                $module->pdf_completed = $progress ? $progress->pdf_completed : false;
+            });
         }
-
-        // Get modules the student is enrolled in with enrollment data
-        $query = Module::with(['user', 'assignedTeacher'])
-            ->where('status', 'published')
-            ->whereHas('enrollments', function ($query) use ($user) {
-                $query->where('user_id', $user->id);
-            })
-            ->orderBy('order')
-            ->orderBy('created_at', 'desc');
-
-        // Apply filters
-        if ($request->filled('search')) {
-            $query->where('title', 'like', "%{$request->search}%");
-        }
-
-        $modules = $query->get();
-
-        // Batch load progress for this user
-        $myModuleIds = $modules->pluck('id');
-        $myProgressByModule = ModuleProgress::where('user_id', $user->id)
-            ->whereIn('module_id', $myModuleIds)
-            ->get()
-            ->keyBy('module_id');
-
-        $modules->each(function ($module) use ($myProgressByModule) {
-            $progress = $myProgressByModule->get($module->id);
-            $module->progress = $progress ? $progress->progress : 0;
-            $module->pdf_completed = $progress ? $progress->pdf_completed : false;
-        });
 
         return view('modules.my', compact('modules'));
     }
@@ -170,6 +232,7 @@ class ModuleController extends Controller
     public function create()
     {
         $teachers = User::where('role', 'teacher')->where('status', 'active')->get();
+
         return view('modules.create', compact('teachers'));
     }
 
@@ -181,8 +244,8 @@ class ModuleController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'], // 5MB max
-            'file' => ['nullable', 'file', 'mimes:pdf,doc,docx,ppt,pptx,xls,xlsx', 'max:10240'], // 10MB max
+            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'file' => ['nullable', 'file', 'mimes:pdf', 'max:102400'],
             'status' => ['required', 'in:draft,published'],
             'order' => ['required', 'integer', 'min:0'],
             'assigned_teacher_id' => ['nullable', 'exists:users,id'],
@@ -206,7 +269,7 @@ class ModuleController extends Controller
         ];
 
         // Only assign teacher if admin is creating and selected a teacher
-        if (Auth::user()->role === 'admin' && !empty($validated['assigned_teacher_id'])) {
+        if (Auth::user()->role === 'admin' && ! empty($validated['assigned_teacher_id'])) {
             $data['assigned_teacher_id'] = $validated['assigned_teacher_id'];
         } elseif (Auth::user()->role === 'teacher') {
             // Auto-assign the teacher when they create a module
@@ -226,7 +289,7 @@ class ModuleController extends Controller
         $module = Module::create($data);
 
         // Create assessment if requested
-        if ($request->input('create_assessment') === '1' && !empty($validated['assessment'])) {
+        if ($request->input('create_assessment') === '1' && ! empty($validated['assessment'])) {
             Assessment::create([
                 'module_id' => $module->id,
                 'created_by' => Auth::id(),
@@ -254,7 +317,7 @@ class ModuleController extends Controller
         // Only admin or the assigned teacher can edit
         $currentUser = Auth::user();
 
-        if (!$module->canManage($currentUser)) {
+        if (! $module->canManage($currentUser)) {
             abort(403, 'You do not have permission to edit this module.');
         }
 
@@ -262,6 +325,7 @@ class ModuleController extends Controller
         $module->load('assessment');
 
         $teachers = User::where('role', 'teacher')->where('status', 'active')->get();
+
         return view('modules.edit', compact('module', 'teachers'));
     }
 
@@ -273,64 +337,65 @@ class ModuleController extends Controller
         // Only admin or the assigned teacher can update
         $currentUser = Auth::user();
 
-        if (!$module->canManage($currentUser)) {
+        if (! $module->canManage($currentUser)) {
             abort(403, 'You do not have permission to update this module.');
         }
 
-        $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
-            'file' => ['nullable', 'file', 'mimes:pdf,doc,docx,ppt,pptx,xls,xlsx', 'max:10240'],
-            'status' => ['required', 'in:draft,published'],
-            'order' => ['required', 'integer', 'min:0'],
-            'assigned_teacher_id' => ['nullable', 'exists:users,id'],
-            'update_assessment' => ['nullable', 'in:0,1'],
-            'assessment' => ['nullable', 'array'],
-            'assessment.title' => ['required_if:update_assessment,1', 'string', 'max:255'],
-            'assessment.duration_minutes' => ['required_if:update_assessment,1', 'integer', 'min:1'],
-            'assessment.passing_score' => ['required_if:update_assessment,1', 'integer', 'min:0', 'max:100'],
-            'assessment.max_attempts' => ['required_if:update_assessment,1', 'integer', 'min:0'],
-            'assessment.questions' => ['required_if:update_assessment,1', 'json'],
-            'assessment.is_published' => ['nullable', 'in:0,1'],
-            'assessment.show_correct_answer' => ['nullable', 'in:0,1'],
-        ]);
+        $saveType = $request->input('save_type', 'module');
 
-        $data = [
-            'title' => $validated['title'],
-            'description' => $validated['description'] ?? null,
-            'status' => $validated['status'],
-            'order' => $validated['order'],
-        ];
+        if ($saveType === 'assessment') {
+            // Validate both module and assessment
+            $validated = $request->validate([
+                'title' => ['required', 'string', 'max:255'],
+                'description' => ['nullable', 'string'],
+                'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+                'file' => ['nullable', 'file', 'mimes:pdf', 'max:102400'],
+                'status' => ['required', 'in:draft,published'],
+                'order' => ['required', 'integer', 'min:0'],
+                'assigned_teacher_id' => ['nullable', 'exists:users,id'],
+                'update_assessment' => ['required', 'in:1'],
+                'assessment' => ['required', 'array'],
+                'assessment.title' => ['required', 'string', 'max:255'],
+                'assessment.duration_minutes' => ['required', 'integer', 'min:1'],
+                'assessment.passing_score' => ['required', 'integer', 'min:0', 'max:100'],
+                'assessment.max_attempts' => ['required', 'integer', 'min:0'],
+                'assessment.questions' => ['required', 'json'],
+                'assessment.is_published' => ['nullable', 'in:0,1'],
+                'assessment.show_correct_answer' => ['nullable', 'in:0,1'],
+            ]);
 
-        // Only admin can assign/change teacher
-        if ($currentUser->role === 'admin') {
-            $data['assigned_teacher_id'] = $validated['assigned_teacher_id'] ?? null;
-        }
+            $data = [
+                'title' => $validated['title'],
+                'description' => $validated['description'] ?? null,
+                'status' => $validated['status'],
+                'order' => $validated['order'],
+            ];
 
-        // Handle image upload (optional on update)
-        if ($request->hasFile('image')) {
-            if ($module->image_path) {
-                Storage::disk('public')->delete($module->image_path);
+            // Only admin can assign/change teacher
+            if ($currentUser->role === 'admin') {
+                $data['assigned_teacher_id'] = $validated['assigned_teacher_id'] ?? null;
             }
-            $data['image_path'] = $request->file('image')->store('modules/images', 'public');
-        }
 
-        // Handle file upload
-        if ($request->hasFile('file')) {
-            // Delete old file
-            if ($module->file_path) {
-                Storage::disk('public')->delete($module->file_path);
+            // Handle image upload
+            if ($request->hasFile('image')) {
+                if ($module->image_path) {
+                    Storage::disk('public')->delete($module->image_path);
+                }
+                $data['image_path'] = $request->file('image')->store('modules/images', 'public');
             }
-            $data['file_path'] = $request->file('file')->store('modules', 'public');
-        }
 
-        $module->update($data);
+            // Handle file upload
+            if ($request->hasFile('file')) {
+                if ($module->file_path) {
+                    Storage::disk('public')->delete($module->file_path);
+                }
+                $data['file_path'] = $request->file('file')->store('modules', 'public');
+            }
 
-        // Update assessment if requested
-        if ($request->input('update_assessment') === '1' && !empty($validated['assessment'])) {
+            $module->update($data);
+
+            // Update or create assessment
             if ($module->assessment) {
-                // Update existing assessment
                 $module->assessment->update([
                     'title' => $validated['assessment']['title'],
                     'questions' => json_decode($validated['assessment']['questions'], true),
@@ -341,7 +406,6 @@ class ModuleController extends Controller
                     'show_correct_answer' => $request->input('assessment.show_correct_answer') ? true : false,
                 ]);
             } else {
-                // Create new assessment
                 Assessment::create([
                     'module_id' => $module->id,
                     'created_by' => Auth::id(),
@@ -356,32 +420,213 @@ class ModuleController extends Controller
                 ]);
             }
 
-            return redirect()->route('modules.index')->with('success', 'Module and assessment updated successfully!');
+            return redirect()->route('modules.index')->with('success', 'Module and assessment saved successfully!');
         }
+
+        // Save module only (skip assessment validation)
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'file' => ['nullable', 'file', 'mimes:pdf', 'max:102400'],
+            'status' => ['required', 'in:draft,published'],
+            'order' => ['required', 'integer', 'min:0'],
+            'assigned_teacher_id' => ['nullable', 'exists:users,id'],
+        ]);
+
+        $data = [
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'status' => $validated['status'],
+            'order' => $validated['order'],
+        ];
+
+        // Only admin can assign/change teacher
+        if ($currentUser->role === 'admin') {
+            $data['assigned_teacher_id'] = $validated['assigned_teacher_id'] ?? null;
+        }
+
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            if ($module->image_path) {
+                Storage::disk('public')->delete($module->image_path);
+            }
+            $data['image_path'] = $request->file('image')->store('modules/images', 'public');
+        }
+
+        // Handle file upload
+        if ($request->hasFile('file')) {
+            if ($module->file_path) {
+                Storage::disk('public')->delete($module->file_path);
+            }
+            $data['file_path'] = $request->file('file')->store('modules', 'public');
+        }
+
+        $module->update($data);
 
         return redirect()->route('modules.index')->with('success', 'Module updated successfully!');
     }
 
     /**
-     * Remove the specified module.
+     * Soft delete the specified module.
      */
     public function destroy(Module $module)
     {
-        // Only admin or the assigned teacher can delete
-        $currentUser = Auth::user();
-
-        if (!$module->canManage($currentUser)) {
-            abort(403, 'You do not have permission to delete this module.');
+        // Only admin can soft delete modules
+        if (Auth::user()->role !== 'admin') {
+            abort(403, 'Only administrators can delete modules.');
         }
 
-        // Delete file if exists
+        // Soft delete the module (files are kept for potential restore)
+        $module->delete();
+
+        return redirect()->route('modules.index')->with('success', 'Module moved to trash successfully!');
+    }
+
+    /**
+     * Display trashed modules (soft deleted).
+     */
+    public function trashed(Request $request)
+    {
+        // Only admin can view trashed modules
+        if (Auth::user()->role !== 'admin') {
+            abort(403);
+        }
+
+        $query = Module::onlyTrashed()->with(['user', 'assignedTeacher']);
+
+        // Apply filters
+        if ($request->filled('search')) {
+            $query->where('title', 'like', "%{$request->search}%");
+        }
+        if ($request->filled('teacher')) {
+            $query->where('assigned_teacher_id', $request->teacher);
+        }
+
+        $modules = $query->orderBy('deleted_at', 'desc')->get();
+
+        return view('modules.trashed', compact('modules'));
+    }
+
+    /**
+     * Restore a soft deleted module.
+     */
+    public function restore($id)
+    {
+        // Only admin can restore
+        if (Auth::user()->role !== 'admin') {
+            abort(403);
+        }
+
+        $module = Module::onlyTrashed()->findOrFail($id);
+
+        // Restore the module
+        $module->restore();
+
+        return redirect()->route('modules.trashed')->with('success', 'Module restored successfully!');
+    }
+
+    /**
+     * Permanently delete a module (force delete).
+     */
+    public function forceDelete($id)
+    {
+        // Only admin can force delete
+        if (Auth::user()->role !== 'admin') {
+            abort(403);
+        }
+
+        $module = Module::onlyTrashed()->findOrFail($id);
+
+        // Delete physical files permanently
         if ($module->file_path) {
             Storage::disk('public')->delete($module->file_path);
         }
+        if ($module->image_path) {
+            Storage::disk('public')->delete($module->image_path);
+        }
 
-        $module->delete();
+        // Delete related records
+        if ($module->assessment) {
+            // Delete assessment submissions first
+            $module->assessment->submissions()->delete();
+            $module->assessment->delete();
+        }
 
-        return redirect()->route('modules.index')->with('success', 'Module deleted successfully!');
+        // Delete enrollments and progress
+        Enrollment::where('module_id', $module->id)->delete();
+        ModuleProgress::where('module_id', $module->id)->delete();
+
+        // Force delete the module
+        $module->forceDelete();
+
+        return redirect()->route('modules.trashed')->with('success', 'Module permanently deleted!');
+    }
+
+    /**
+     * Bulk restore multiple modules.
+     */
+    public function bulkRestore(Request $request)
+    {
+        // Only admin can bulk restore
+        if (Auth::user()->role !== 'admin') {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'module_ids' => ['required', 'array'],
+            'module_ids.*' => ['exists:modules,id'],
+        ]);
+
+        $count = Module::onlyTrashed()
+            ->whereIn('id', $validated['module_ids'])
+            ->restore();
+
+        return redirect()->route('modules.trashed')->with('success', "{$count} module(s) restored successfully!");
+    }
+
+    /**
+     * Bulk force delete multiple modules.
+     */
+    public function bulkForceDelete(Request $request)
+    {
+        // Only admin can bulk force delete
+        if (Auth::user()->role !== 'admin') {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'module_ids' => ['required', 'array'],
+            'module_ids.*' => ['exists:modules,id'],
+        ]);
+
+        $modules = Module::onlyTrashed()->whereIn('id', $validated['module_ids'])->get();
+        $count = 0;
+
+        foreach ($modules as $module) {
+            // Delete files
+            if ($module->file_path) {
+                Storage::disk('public')->delete($module->file_path);
+            }
+            if ($module->image_path) {
+                Storage::disk('public')->delete($module->image_path);
+            }
+
+            // Delete related records
+            if ($module->assessment) {
+                $module->assessment->submissions()->delete();
+                $module->assessment->delete();
+            }
+
+            Enrollment::where('module_id', $module->id)->delete();
+            ModuleProgress::where('module_id', $module->id)->delete();
+
+            // Force delete
+            $module->forceDelete();
+            $count++;
+        }
+
+        return redirect()->route('modules.trashed')->with('success', "{$count} module(s) permanently deleted!");
     }
 
     /**
@@ -392,7 +637,7 @@ class ModuleController extends Controller
         $currentUser = Auth::user();
 
         // Only admin or assigned teacher can manage students
-        if (!$module->canManage($currentUser)) {
+        if (! $module->canManage($currentUser)) {
             abort(403, 'You do not have permission to manage students for this module.');
         }
 
@@ -424,7 +669,7 @@ class ModuleController extends Controller
         $currentUser = Auth::user();
 
         // Only admin or assigned teacher can add students
-        if (!$module->canManage($currentUser)) {
+        if (! $module->canManage($currentUser)) {
             abort(403, 'You do not have permission to add students to this module.');
         }
 
@@ -459,7 +704,7 @@ class ModuleController extends Controller
         $currentUser = Auth::user();
 
         // Only admin or assigned teacher can remove students
-        if (!$module->canManage($currentUser)) {
+        if (! $module->canManage($currentUser)) {
             abort(403, 'You do not have permission to remove students from this module.');
         }
 

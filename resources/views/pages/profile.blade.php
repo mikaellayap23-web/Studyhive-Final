@@ -61,12 +61,12 @@
                                 <div class="form-row">
                                     <div class="form-group">
                                         <label for="first_name">First Name</label>
-                                        <input type="text" id="first_name" name="first_name" value="{{ old('first_name', auth()->user()->first_name) }}" required>
+                                        <input type="text" id="first_name" name="first_name" value="{{ old('first_name', auth()->user()->first_name) }}" required pattern="[a-zA-Z\s]+" title="Only letters and spaces are allowed">
                                     </div>
 
                                     <div class="form-group">
                                         <label for="last_name">Last Name</label>
-                                        <input type="text" id="last_name" name="last_name" value="{{ old('last_name', auth()->user()->last_name) }}" required>
+                                        <input type="text" id="last_name" name="last_name" value="{{ old('last_name', auth()->user()->last_name) }}" required pattern="[a-zA-Z\s]+" title="Only letters and spaces are allowed">
                                     </div>
                                 </div>
 
@@ -160,7 +160,7 @@
                         </div>
 
                         <!-- Audit Trail Card -->
-                        @if(count($auditEntries) > 0)
+                        @if(count($auditEntries) > 0 || request('action') || request('date_from') || request('date_to'))
                         <div class="profile-card">
                             <div class="profile-card-header">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -169,7 +169,35 @@
                                 <h2>Activity Log</h2>
                             </div>
 
-                            <div style="overflow-x: auto;">
+                            <!-- Filters -->
+                            <form method="GET" action="{{ route('profile') }}" style="display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; align-items: flex-end;">
+                                <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
+                                    <label style="font-size: 0.8rem; margin-bottom: 0.25rem;">Action</label>
+                                    <select name="action" style="padding: 0.5rem; border: 1px solid #dfe3e8; border-radius: 6px; font-size: 0.875rem; width: 100%;">
+                                        <option value="">All Actions</option>
+                                        <option value="created" {{ request('action') === 'created' ? 'selected' : '' }}>Created</option>
+                                        <option value="updated" {{ request('action') === 'updated' ? 'selected' : '' }}>Updated</option>
+                                        <option value="deleted" {{ request('action') === 'deleted' ? 'selected' : '' }}>Deleted</option>
+                                        <option value="approved" {{ request('action') === 'approved' ? 'selected' : '' }}>Approved</option>
+                                        <option value="rejected" {{ request('action') === 'rejected' ? 'selected' : '' }}>Rejected</option>
+                                        <option value="restored" {{ request('action') === 'restored' ? 'selected' : '' }}>Restored</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
+                                    <label style="font-size: 0.8rem; margin-bottom: 0.25rem;">Date From</label>
+                                    <input type="date" name="date_from" value="{{ request('date_from') }}" style="padding: 0.5rem; border: 1px solid #dfe3e8; border-radius: 6px; font-size: 0.875rem; width: 100%;">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
+                                    <label style="font-size: 0.8rem; margin-bottom: 0.25rem;">Date To</label>
+                                    <input type="date" name="date_to" value="{{ request('date_to') }}" style="padding: 0.5rem; border: 1px solid #dfe3e8; border-radius: 6px; font-size: 0.875rem; width: 100%;">
+                                </div>
+                                <button type="submit" class="btn btn-secondary btn-sm" style="align-self: flex-end;">Filter</button>
+                                @if(request('action') || request('date_from') || request('date_to'))
+                                    <a href="{{ route('profile') }}" class="btn btn-secondary btn-sm" style="align-self: flex-end;">Clear</a>
+                                @endif
+                            </form>
+
+                            <div style="overflow-x: auto; max-height: 300px; overflow-y: auto;">
                                 <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
                                     <thead>
                                         <tr style="border-bottom: 2px solid #e2e8e4;">

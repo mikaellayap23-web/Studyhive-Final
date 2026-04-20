@@ -6,10 +6,10 @@ use App\Models\Assessment;
 use App\Models\AssessmentSubmission;
 use App\Models\Module;
 use App\Models\User;
+use App\Services\CertificateService;
+use App\Services\GradeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Arr;
 
 class AssessmentController extends Controller
 {
@@ -128,7 +128,7 @@ class AssessmentController extends Controller
         $user = Auth::user();
 
         // Check if user can edit this assessment
-        if (!$assessment->canEdit($user)) {
+        if (! $assessment->canEdit($user)) {
             abort(403, 'You are not authorized to edit this assessment.');
         }
 
@@ -146,7 +146,7 @@ class AssessmentController extends Controller
         $user = Auth::user();
 
         // Check if user can edit this assessment
-        if (!$assessment->canEdit($user)) {
+        if (! $assessment->canEdit($user)) {
             abort(403, 'You are not authorized to edit this assessment.');
         }
 
@@ -184,7 +184,7 @@ class AssessmentController extends Controller
         $user = Auth::user();
 
         // Check if user can delete this assessment
-        if (!$assessment->canEdit($user)) {
+        if (! $assessment->canEdit($user)) {
             abort(403, 'You are not authorized to delete this assessment.');
         }
 
@@ -207,7 +207,7 @@ class AssessmentController extends Controller
         }
 
         // Check if assessment is published
-        if (!$assessment->is_published) {
+        if (! $assessment->is_published) {
             abort(403, 'This assessment is not available yet.');
         }
 
@@ -216,18 +216,19 @@ class AssessmentController extends Controller
             ->where('user_id', $user->id)
             ->exists();
 
-        if (!$isEnrolled) {
+        if (! $isEnrolled) {
             abort(403, 'You must be enrolled in this module to take the assessment.');
         }
 
         // Check if student has attempts remaining
-        if (!$assessment->canUserTake($user)) {
+        if (! $assessment->canUserTake($user)) {
             // Show their best result instead
             $bestSubmission = $assessment->bestSubmission($user);
             if ($bestSubmission) {
                 return redirect()->route('assessments.results', $bestSubmission->id)
                     ->with('info', 'You have used all your attempts for this assessment. Here is your best result.');
             }
+
             return redirect()->route('modules.my')
                 ->with('info', 'You have used all your attempts for this assessment.');
         }
@@ -243,7 +244,7 @@ class AssessmentController extends Controller
     }
 
     /**
-     * Submit the assessment.
+     * Submit the assessment using GradeService.
      */
     public function submit(Request $request, Assessment $assessment)
     {
@@ -256,7 +257,54 @@ class AssessmentController extends Controller
         }
 
         // Check if student has attempts remaining
-        if (!$assessment->canUserTake($user)) {
+        if (! $assessment->canUserTake($user)) {
+            $bestSubmission = $assessment->bestSubmission($user);
+            if ($bestSubmission) {
+                return redirect()->route('assessments.results', $bestSubmission->id)
+                    ->with('info', 'You have used all your attempts for this assessment.');
+            }
+
+            return redirect()->route('modules.my')
+                ->with('info', 'You have used all your attempts for this assessment.');
+        }
+
+        $request->validate([
+            'answers' => ['required', 'array'],
+        ]);
+
+        // Use GradeService for processing with transaction
+        $gradeService = app(GradeService::class);
+        $submission = $gradeService->processSubmission($assessment, $user->id);
+
+        // Auto-issue certificate if passed
+        if ($submission->status === 'passed') {
+            $certService = app(CertificateService::class);
+            $module = $assessment->module;
+            if ($module && $certService->isModuleCompleted($user, $module)) {
+                $certService->generateCertificate($user, $module);
+            }
+        }
+
+        return redirect()->route('assessments.results', $submission->id);
+    }
+
+    /**
+     * Submit the assessment (legacy method - uses inline grading).
+     *
+     * @deprecated Use submit() instead which uses GradeService.
+     */
+    public function submitLegacy(Request $request, Assessment $assessment)
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        // Only students can submit assessments
+        if ($user->role !== 'student') {
+            abort(403);
+        }
+
+        // Check if student has attempts remaining
+        if (! $assessment->canUserTake($user)) {
             return redirect()->route('assessments.results', $assessment->latestSubmission($user)->id)
                 ->with('error', 'You have used all your attempts for this assessment.');
         }
@@ -309,7 +357,7 @@ class AssessmentController extends Controller
 
         // Auto-issue certificate if module is now completed
         if ($status === 'passed') {
-            $certService = app(\App\Services\CertificateService::class);
+            $certService = app(CertificateService::class);
             $module = $assessment->module;
             if ($module && $certService->isModuleCompleted($user, $module)) {
                 $certService->generateCertificate($user, $module);

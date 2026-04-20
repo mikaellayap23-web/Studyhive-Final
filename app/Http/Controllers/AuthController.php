@@ -29,7 +29,7 @@ class AuthController extends Controller
 
         $user = User::where('email', $credentials['email'])->first();
 
-        if (!$user) {
+        if (! $user) {
             return back()->withErrors([
                 'email' => 'These credentials do not match our records.',
             ])->onlyInput('email');
@@ -47,7 +47,7 @@ class AuthController extends Controller
             ])->onlyInput('email');
         }
 
-        if (!Hash::check($credentials['password'], $user->password)) {
+        if (! Hash::check($credentials['password'], $user->password)) {
             return back()->withErrors([
                 'email' => 'These credentials do not match our records.',
             ])->onlyInput('email');
@@ -74,14 +74,25 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $validated = $request->validate([
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
+            'first_name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
+            'last_name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ], [
+            'first_name.regex' => 'The first name field should only contain letters.',
+            'last_name.regex' => 'The last name field should only contain letters.',
         ]);
 
-        // Generate username from email
-        $username = strtolower(explode('@', $validated['email'])[0]);
+        // Generate unique username from first name and last name
+        $baseUsername = strtolower(preg_replace('/[^a-z0-9]/', '', $validated['first_name'].$validated['last_name']));
+        $username = $baseUsername;
+        $counter = 1;
+
+        // Ensure unique username
+        while (User::where('username', $username)->exists()) {
+            $username = $baseUsername.$counter;
+            $counter++;
+        }
 
         $user = User::create([
             'first_name' => $validated['first_name'],

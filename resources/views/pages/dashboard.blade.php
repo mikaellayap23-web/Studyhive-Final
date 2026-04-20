@@ -202,67 +202,70 @@
                 <!-- Admin Dashboard -->
                 @if(auth()->user()->role === 'admin')
                     <h2 class="section-title">Audit Trail</h2>
-                    <div class="cards-grid">
-                        @php
-                            $logPath = storage_path('logs/audit.log');
-                            $auditEntries = [];
-                            if (file_exists($logPath)) {
-                                $lines = file($logPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-                                foreach ($lines as $line) {
-                                    $data = json_decode($line, true);
-                                    if ($data && isset($data['action'])) {
-                                        $auditEntries[] = $data;
+                    <div class="card" style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid #e2e8e4;">
+                                    <th style="padding: 0.75rem; text-align: left; color: #4a5568; font-weight: 600;">Date</th>
+                                    <th style="padding: 0.75rem; text-align: left; color: #4a5568; font-weight: 600;">User</th>
+                                    <th style="padding: 0.75rem; text-align: left; color: #4a5568; font-weight: 600;">Action</th>
+                                    <th style="padding: 0.75rem; text-align: left; color: #4a5568; font-weight: 600;">Target</th>
+                                    <th style="padding: 0.75rem; text-align: left; color: #4a5568; font-weight: 600;">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @php
+                                    $logPath = storage_path('logs/audit.log');
+                                    $auditEntries = [];
+                                    if (file_exists($logPath)) {
+                                        $lines = file($logPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+                                        foreach ($lines as $line) {
+                                            $data = json_decode($line, true);
+                                            if ($data && isset($data['action'])) {
+                                                $auditEntries[] = $data;
+                                            }
+                                        }
+                                        $auditEntries = array_reverse($auditEntries);
                                     }
-                                }
-                                $auditEntries = array_reverse($auditEntries);
-                            }
-                            $recentEntries = array_slice($auditEntries, 0, 4);
-                        @endphp
+                                    $recentEntries = array_slice($auditEntries, 0, 10);
+                                @endphp
 
-                        @forelse($recentEntries as $entry)
-                            <a href="{{ route('admin.audit-trail') }}" class="card" style="text-decoration: none; color: inherit;">
-                                <div class="card-icon">
-                                    @php
-                                        $icons = [
-                                            'Created' => '<path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />',
-                                            'Updated' => '<path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />',
-                                            'Deleted' => '<path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />',
-                                            'Approved' => '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />',
-                                            'Rejected' => '<path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />',
-                                        ];
-                                        $icon = $icons[$entry['action']] ?? '<path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />';
-                                    @endphp
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        {!! $icon !!}
-                                    </svg>
-                                </div>
-                                <h3>{{ $entry['action'] }} - {{ $entry['target'] }}</h3>
-                                <p>{{ $entry['details'] }}</p>
-                                <span style="font-size: 0.75rem; color: #706f6c; margin-top: 0.5rem; display: block;">{{ $entry['timestamp'] }}</span>
-                            </a>
-                        @empty
-                            <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 2rem;">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="width: 48px; height: 48px; margin: 0 auto 1rem; opacity: 0.4;">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                <h3>No Audit Activity</h3>
-                                <p>Admin activity will appear here once actions are taken.</p>
-                                <a href="{{ route('admin.audit-trail') }}" class="btn btn-primary" style="margin-top: 1rem; display: inline-block; width: auto;">
-                                    View Full Audit Trail
-                                </a>
-                            </div>
-                        @endforelse
-
+                                @forelse($recentEntries as $entry)
+                                    <tr style="border-bottom: 1px solid #f0f0f0;">
+                                        <td style="padding: 0.75rem; white-space: nowrap; color: #706f6c;">{{ $entry['timestamp'] }}</td>
+                                        <td style="padding: 0.75rem;">{{ $entry['user_name'] }}</td>
+                                        <td style="padding: 0.75rem;">
+                                            @php
+                                                $colors = [
+                                                    'created' => '#16a34a',
+                                                    'updated' => '#2563eb',
+                                                    'deleted' => '#dc2626',
+                                                    'approved' => '#16a34a',
+                                                    'rejected' => '#dc2626',
+                                                    'soft deleted' => '#f59e0b',
+                                                    'restored' => '#8b5cf6',
+                                                    'permanently deleted' => '#dc2626',
+                                                ];
+                                                $color = $colors[strtolower($entry['action'])] ?? '#4a5568';
+                                            @endphp
+                                            <span style="color: {{ $color }}; font-weight: 600;">{{ $entry['action'] }}</span>
+                                        </td>
+                                        <td style="padding: 0.75rem;">{{ $entry['target'] }}</td>
+                                        <td style="padding: 0.75rem; color: #706f6c;">{{ $entry['details'] }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" style="padding: 2rem; text-align: center; color: #706f6c;">
+                                            No audit activity yet.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                         @if(count($recentEntries) > 0)
-                            <a href="{{ route('admin.audit-trail') }}" class="card" style="text-decoration: none; color: inherit; display: flex; align-items: center; justify-content: center; background-color: #f8faf9;">
-                                <div>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width: 32px; height: 32px; margin: 0 auto 0.5rem; stroke: #2d5a3d;">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                    <h3>View Full Audit Trail</h3>
-                                    <p>See all admin activity and logs.</p>
-                                </div>
-                            </a>
+                            <div style="padding: 1rem; text-align: center; border-top: 1px solid #e2e8e4;">
+                                <a href="{{ route('profile') }}" class="btn btn-secondary btn-sm">View Full Activity in Profile</a>
+                            </div>
                         @endif
                     </div>
 

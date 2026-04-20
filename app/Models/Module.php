@@ -6,9 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Module extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'user_id',
         'assigned_teacher_id',
@@ -19,6 +22,8 @@ class Module extends Model
         'status',
         'order',
     ];
+
+    protected $dates = ['deleted_at'];
 
     public function user(): BelongsTo
     {
@@ -66,6 +71,19 @@ class Module extends Model
      */
     public function canManage(User $user): bool
     {
-        return $user->role === 'admin' || $this->assigned_teacher_id === $user->id;
+        if ($user->role === 'admin') {
+            return true;
+        }
+
+        // Teacher can manage if they're assigned or created the module
+        return $this->assigned_teacher_id === $user->id || $this->user_id === $user->id;
+    }
+
+    /**
+     * Check if module is trashed
+     */
+    public function isTrashed(): bool
+    {
+        return $this->trashed();
     }
 }

@@ -147,6 +147,7 @@
                     <form action="{{ route('modules.update', $module->id) }}" method="POST" enctype="multipart/form-data" id="module-form">
                         @csrf
                         @method('PUT')
+                        <input type="hidden" name="save_type" id="save_type" value="module">
 
                         <div class="form-row">
                             <div class="form-group">
@@ -215,9 +216,9 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                                     </svg>
                                     <span>Click to upload or drag and drop</span>
-                                    <span style="font-size: 0.75rem;">PDF, DOC, DOCX, PPT, PPTX (MAX. 10MB)</span>
+                                    <span style="font-size: 0.75rem;">PDF (MAX. 100MB)</span>
                                 </label>
-                                <input type="file" id="file" name="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx">
+                                <input type="file" id="file" name="file" accept=".pdf">
                             </div>
                             @error('file')
                                 <p class="error-text" style="color: #991b1b; font-size: 0.8rem; margin-top: 0.5rem;">{{ $message }}</p>
@@ -336,7 +337,15 @@
                     </div>
 
                         <div class="form-group" style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-primary" onclick="document.getElementById('save_type').value = 'module'">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
+                                    <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+                                    <polyline points="17 21 17 13 7 13 7 21"/>
+                                    <polyline points="7 3 7 8 15 8"/>
+                                </svg>
+                                Save Module
+                            </button>
+                            <button type="submit" class="btn btn-success" onclick="document.getElementById('save_type').value = 'assessment'">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
                                     <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
                                     <polyline points="17 21 17 13 7 13 7 21"/>
@@ -509,9 +518,11 @@
 
         // Collect questions and submit as JSON
         document.getElementById('module-form').addEventListener('submit', function(e) {
-            const updateAssessment = document.getElementById('update_assessment').value;
+            const saveType = document.getElementById('save_type').value;
             
-            if (updateAssessment === '1') {
+            if (saveType === 'assessment') {
+                document.getElementById('update_assessment').value = '1';
+                
                 const questions = [];
                 const questionItems = document.querySelectorAll('.question-item');
 
@@ -548,6 +559,8 @@
                 }
 
                 document.getElementById('questions-json').value = JSON.stringify(questions);
+            } else {
+                document.getElementById('update_assessment').value = '0';
             }
         });
     </script>

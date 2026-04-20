@@ -187,9 +187,9 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                                     </svg>
                                     <span>Click to upload or drag and drop</span>
-                                    <span style="font-size: 0.75rem;">PDF, DOC, DOCX, PPT, PPTX (MAX. 10MB)</span>
+                                    <span style="font-size: 0.75rem;">PDF (MAX. 100MB)</span>
                                 </label>
-                                <input type="file" id="file" name="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx">
+                                <input type="file" id="file" name="file" accept=".pdf">
                             </div>
                             @error('file')
                                 <p class="error-text" style="color: #991b1b; font-size: 0.8rem; margin-top: 0.5rem;">{{ $message }}</p>

@@ -56,8 +56,28 @@
 
                 <!-- Page Header -->
                 <div class="page-header">
-                    <h1>Browse Modules</h1>
-                    <p style="color: #718096; font-size: 0.9rem;">Explore and enroll in available learning modules</p>
+                    @if(auth()->user()->role === 'student')
+                        <h1>Browse Modules</h1>
+                        <p style="color: #718096; font-size: 0.9rem;">Explore and enroll in available learning modules</p>
+                    @else
+                        <h1>All Modules</h1>
+                        <div style="display: flex; gap: 0.5rem;">
+                            @if(auth()->user()->role === 'admin')
+                                <a href="{{ route('modules.trashed') }}" class="btn btn-secondary">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                    Trash
+                                </a>
+                            @endif
+                            <a href="{{ route('modules.create') }}" class="btn btn-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 5v14M5 12h14"/>
+                                </svg>
+                                Add Module
+                            </a>
+                        </div>
+                    @endif
                 </div>
 
                 <!-- Filters -->
@@ -66,20 +86,31 @@
                         <label for="filter_search" style="font-size: 0.8rem; margin-bottom: 0.25rem;">Search</label>
                         <input type="text" id="filter_search" name="search" value="{{ request('search') }}" placeholder="Search by title" style="padding: 0.5rem 0.75rem; border: 1px solid #dfe3e8; border-radius: 6px; font-size: 0.875rem; font-family: inherit; background-color: #fafbfc;">
                     </div>
-                    <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
-                        <label for="filter_teacher" style="font-size: 0.8rem; margin-bottom: 0.25rem;">Teacher</label>
-                        <select id="filter_teacher" name="teacher" style="padding: 0.5rem 0.75rem; border: 1px solid #dfe3e8; border-radius: 6px; font-size: 0.875rem; font-family: inherit; background-color: #fafbfc;">
-                            <option value="">All Teachers</option>
-                            @php
-                                $teachers = \App\Models\User::where('role', 'teacher')->orderBy('first_name')->get();
-                            @endphp
-                            @foreach($teachers as $teacher)
-                                <option value="{{ $teacher->id }}" {{ request('teacher') == $teacher->id ? 'selected' : '' }}>
-                                    {{ $teacher->first_name }} {{ $teacher->last_name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
+                    @if(auth()->user()->role === 'student')
+                        <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
+                            <label for="filter_teacher" style="font-size: 0.8rem; margin-bottom: 0.25rem;">Teacher</label>
+                            <select id="filter_teacher" name="teacher" style="padding: 0.5rem 0.75rem; border: 1px solid #dfe3e8; border-radius: 6px; font-size: 0.875rem; font-family: inherit; background-color: #fafbfc;">
+                                <option value="">All Teachers</option>
+                                @php
+                                    $teachers = \App\Models\User::where('role', 'teacher')->orderBy('first_name')->get();
+                                @endphp
+                                @foreach($teachers as $teacher)
+                                    <option value="{{ $teacher->id }}" {{ request('teacher') == $teacher->id ? 'selected' : '' }}>
+                                        {{ $teacher->first_name }} {{ $teacher->last_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @else
+                        <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
+                            <label for="filter_status" style="font-size: 0.8rem; margin-bottom: 0.25rem;">Status</label>
+                            <select id="filter_status" name="status" style="padding: 0.5rem 0.75rem; border: 1px solid #dfe3e8; border-radius: 6px; font-size: 0.875rem; font-family: inherit; background-color: #fafbfc;">
+                                <option value="">All Statuses</option>
+                                <option value="draft" {{ request('status') == 'draft' ? 'selected' : '' }}>Draft</option>
+                                <option value="published" {{ request('status') == 'published' ? 'selected' : '' }}>Published</option>
+                            </select>
+                        </div>
+                    @endif
                     <button type="submit" class="btn btn-secondary btn-sm" style="align-self: flex-end;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 0.25rem;">
                             <circle cx="11" cy="11" r="8"/>
@@ -87,7 +118,7 @@
                         </svg>
                         Filter
                     </button>
-                    @if(request('search') || request('teacher'))
+                    @if(request('search') || request('teacher') || request('status'))
                         <a href="{{ route('modules.all') }}" class="btn btn-secondary btn-sm" style="align-self: flex-end;">Clear</a>
                     @endif
                 </form>
@@ -127,15 +158,17 @@
                                         <span class="status-badge status-{{ $module->status }}">
                                             {{ ucfirst($module->status) }}
                                         </span>
-                                        @if($module->is_enrolled)
-                                            <span class="enrolled-badge" style="background-color: #48bb78; color: white; font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 9999px; font-weight: 600;">
-                                                Enrolled
-                                            </span>
-                                        @endif
-                                        @if($module->is_completed)
-                                            <span class="enrolled-badge" style="background-color: #16a34a; color: white; font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 9999px; font-weight: 600;">
-                                                Completed
-                                            </span>
+                                        @if(auth()->user()->role === 'student')
+                                            @if($module->is_enrolled)
+                                                <span class="enrolled-badge" style="background-color: #48bb78; color: white; font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 9999px; font-weight: 600;">
+                                                    Enrolled
+                                                </span>
+                                            @endif
+                                            @if($module->is_completed)
+                                                <span class="enrolled-badge" style="background-color: #16a34a; color: white; font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 9999px; font-weight: 600;">
+                                                    Completed
+                                                </span>
+                                            @endif
                                         @endif
                                     </div>
                                 </div>
@@ -160,35 +193,57 @@
                                             </svg>
                                             Preview
                                         </a>
-                                        @if(!$module->is_enrolled && !$module->is_completed)
-                                            <form action="{{ route('modules.enroll', $module->id) }}" method="POST" style="display: inline;">
-                                                @csrf
-                                                <button type="submit" class="btn btn-primary btn-sm">
+                                        @if(auth()->user()->role === 'student')
+                                            @if(!$module->is_enrolled && !$module->is_completed)
+                                                <form action="{{ route('modules.enroll', $module->id) }}" method="POST" style="display: inline;">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-primary btn-sm">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                            <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                                                            <circle cx="8.5" cy="7" r="4"/>
+                                                            <line x1="20" y1="8" x2="20" y2="14"/>
+                                                            <line x1="23" y1="11" x2="17" y2="11"/>
+                                                        </svg>
+                                                        Enroll
+                                                    </button>
+                                                </form>
+                                            @elseif($module->is_completed)
+                                                <span style="color: #16a34a; font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 0.25rem;">
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                        <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
-                                                        <circle cx="8.5" cy="7" r="4"/>
-                                                        <line x1="20" y1="8" x2="20" y2="14"/>
-                                                        <line x1="23" y1="11" x2="17" y2="11"/>
+                                                        <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                                                        <polyline points="22 4 12 14.01 9 11.01"/>
                                                     </svg>
-                                                    Enroll
-                                                </button>
-                                            </form>
-                                        @elseif($module->is_completed)
-                                            <span style="color: #16a34a; font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 0.25rem;">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                    <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
-                                                    <polyline points="22 4 12 14.01 9 11.01"/>
-                                                </svg>
-                                                Completed
-                                            </span>
+                                                    Completed
+                                                </span>
+                                            @else
+                                                <form action="{{ route('modules.unenroll', $module->id) }}" method="POST" style="display: inline;">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-outline btn-sm" onclick="return confirm('Are you sure you want to unenroll from this module?')">
+                                                        Unenroll
+                                                    </button>
+                                                </form>
+                                            @endif
                                         @else
-                                            <form action="{{ route('modules.unenroll', $module->id) }}" method="POST" style="display: inline;">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-outline btn-sm" onclick="return confirm('Are you sure you want to unenroll from this module?')">
-                                                    Unenroll
-                                                </button>
-                                            </form>
+                                            @if($module->canManage(auth()->user()))
+                                                <a href="{{ route('modules.edit', $module->id) }}" class="btn btn-primary btn-sm">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                                                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                                    </svg>
+                                                    Edit
+                                                </a>
+                                                <form action="{{ route('modules.destroy', $module->id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this module? It will be moved to trash.');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-danger btn-sm">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                            <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                                                        </svg>
+                                                        Delete
+                                                    </button>
+                                                </form>
+                                            @endif
                                         @endif
                                     </div>
                                 </div>
@@ -200,7 +255,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                             </svg>
                             <h3>No Modules Available</h3>
-                            <p>There are no modules available to enroll in at the moment.</p>
+                            <p>There are no modules available at the moment.</p>
                         </div>
                     @endforelse
                 </div>

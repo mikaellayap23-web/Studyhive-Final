@@ -29,6 +29,21 @@ class DatabaseSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
+        // Create Admin Account
+        User::create([
+            'first_name' => 'Angel',
+            'last_name' => 'Lucero',
+            'username' => 'AngelLucero',
+            'email' => 'angeldeocampolucero9@gmail.com',
+            'email_verified_at' => now(), 
+            'password' => Hash::make('admin123'), 
+            'remember_token' => Str::random(10),
+            'role' => 'admin',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
         // // Create Student account
         User::create([
             'first_name' => 'Kooky Lyann',

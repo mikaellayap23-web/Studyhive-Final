@@ -1,16 +1,17 @@
 <?php
 
 use App\Http\Controllers\AnnouncementController;
-use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AuditTrailController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\ModuleProgressController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -54,9 +55,17 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Edit/Update/Delete routes - Must be before /modules/{module}
-Route::get('/modules/{module}/edit', [ModuleController::class, 'edit'])->name('modules.edit')->middleware('auth');
-Route::put('/modules/{module}', [ModuleController::class, 'update'])->name('modules.update')->middleware('auth');
-Route::delete('/modules/{module}', [ModuleController::class, 'destroy'])->name('modules.destroy')->middleware('auth');
+// Admin only for create, edit, update, delete, trash
+Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('/modules/{module}/edit', [ModuleController::class, 'edit'])->name('modules.edit');
+    Route::put('/modules/{module}', [ModuleController::class, 'update'])->name('modules.update');
+    Route::delete('/modules/{module}', [ModuleController::class, 'destroy'])->name('modules.destroy');
+    Route::get('/modules/trash', [ModuleController::class, 'trashed'])->name('modules.trashed');
+    Route::post('/modules/trash/restore', [ModuleController::class, 'bulkRestore'])->name('modules.trash.bulkRestore');
+    Route::post('/modules/trash/{id}/restore', [ModuleController::class, 'restore'])->name('modules.trash.restore');
+    Route::delete('/modules/trash/{id}', [ModuleController::class, 'forceDelete'])->name('modules.trash.forceDelete');
+    Route::delete('/modules/trash', [ModuleController::class, 'bulkForceDelete'])->name('modules.trash.bulkForceDelete');
+});
 
 // Student Module Routes (must be before /modules/{module})
 Route::middleware(['auth'])->group(function () {
@@ -112,9 +121,27 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
     Route::delete('/users/{user}/reject', [UserController::class, 'reject'])->name('users.reject');
 
+    // User Trash
+    Route::get('/users/trash', [UserController::class, 'trashed'])->name('users.trash');
+    Route::post('/users/trash/restore', [UserController::class, 'bulkRestore'])->name('users.trash.bulkRestore');
+    Route::post('/users/trash/{id}/restore', [UserController::class, 'restore'])->name('users.trash.restore');
+    Route::delete('/users/trash/{id}', [UserController::class, 'forceDelete'])->name('users.trash.forceDelete');
+
     // Audit Trail
     Route::get('/audit-trail', [AuditTrailController::class, 'index'])->name('audit-trail');
 
     // Certificate Management
     Route::get('/certificates', [CertificateController::class, 'adminIndex'])->name('certificates.index');
+});
+
+Route::get('/test-mail', function () {
+    try {
+        Mail::raw('Test email from Studyhive', function ($m) {
+            $m->to('studyhive.study@gmail.com')->subject('Test Email');
+        });
+
+        return 'Mail sent successfully!';
+    } catch (Exception $e) {
+        return 'Error: '.$e->getMessage();
+    }
 });

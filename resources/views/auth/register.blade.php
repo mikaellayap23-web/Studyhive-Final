@@ -48,12 +48,12 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="form-group">
                             <label for="first_name">First Name</label>
-                            <input type="text" id="first_name" name="first_name" value="{{ old('first_name') }}" required autofocus>
+                            <input type="text" id="first_name" name="first_name" value="{{ old('first_name') }}" required autofocus pattern="[a-zA-Z\s]+" title="Only letters and spaces are allowed">
                         </div>
 
                         <div class="form-group">
                             <label for="last_name">Last Name</label>
-                            <input type="text" id="last_name" name="last_name" value="{{ old('last_name') }}" required>
+                            <input type="text" id="last_name" name="last_name" value="{{ old('last_name') }}" required pattern="[a-zA-Z\s]+" title="Only letters and spaces are allowed">
                         </div>
                     </div>
 

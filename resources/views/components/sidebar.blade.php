@@ -28,12 +28,36 @@
                 Dashboard
             </a>
 
-            <a href="{{ route('profile') }}" class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                Profile
-            </a>
+            @if(auth()->user()->role === 'student')
+                <div class="nav-dropdown" id="profileDropdown">
+                    <button class="nav-dropdown-toggle" onclick="toggleDropdown('profileDropdown')">
+                        <div class="toggle-content">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            Profile
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" class="chevron">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <div class="nav-dropdown-menu">
+                        <a href="{{ route('profile') }}" class="nav-dropdown-item {{ request()->routeIs('profile') ? 'active' : '' }}">
+                            My Profile
+                        </a>
+                        <a href="{{ route('certificates.index') }}" class="nav-dropdown-item {{ request()->routeIs('certificates.*') ? 'active' : '' }}">
+                            Certificates
+                        </a>
+                    </div>
+                </div>
+            @else
+                <a href="{{ route('profile') }}" class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Profile
+                </a>
+            @endif
         </div>
 
         <!-- Admin Menu -->
@@ -41,12 +65,27 @@
             <div class="nav-section">
                 <div class="nav-section-title">Management</div>
 
-                <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
-                    User Management
-                </a>
+                <div class="nav-dropdown" id="adminUsersDropdown">
+                    <button class="nav-dropdown-toggle" onclick="toggleDropdown('adminUsersDropdown')">
+                        <div class="toggle-content">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
+                            User Management
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" class="chevron">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <div class="nav-dropdown-menu">
+                        <a href="{{ route('admin.users.index') }}" class="nav-dropdown-item {{ request()->routeIs('admin.users.index') ? 'active' : '' }}">
+                            Users
+                        </a>
+                        <a href="{{ route('admin.certificates.index') }}" class="nav-dropdown-item {{ request()->routeIs('admin.certificates.*') ? 'active' : '' }}">
+                            Certificates
+                        </a>
+                    </div>
+                </div>
 
                 <div class="nav-dropdown" id="adminModulesDropdown">
                     <button class="nav-dropdown-toggle" onclick="toggleDropdown('adminModulesDropdown')">
@@ -61,7 +100,7 @@
                         </svg>
                     </button>
                     <div class="nav-dropdown-menu">
-                        <a href="{{ route('modules.index') }}" class="nav-dropdown-item {{ request()->routeIs('modules.index') ? 'active' : '' }}">
+                        <a href="{{ route('modules.all') }}" class="nav-dropdown-item {{ request()->routeIs('modules.all') ? 'active' : '' }}">
                             All Modules
                         </a>
                         <a href="{{ route('modules.my') }}" class="nav-dropdown-item {{ request()->routeIs('modules.my') ? 'active' : '' }}">
@@ -69,13 +108,6 @@
                         </a>
                     </div>
                 </div>
-
-                <a href="{{ route('admin.certificates.index') }}" class="nav-link {{ request()->routeIs('admin.certificates.*') ? 'active' : '' }}">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                    </svg>
-                    Certificates
-                </a>
 
             </div>
 
@@ -111,7 +143,7 @@
                         </svg>
                     </button>
                     <div class="nav-dropdown-menu">
-                        <a href="{{ route('modules.index') }}" class="nav-dropdown-item {{ request()->routeIs('modules.index') ? 'active' : '' }}">
+                        <a href="{{ route('modules.all') }}" class="nav-dropdown-item {{ request()->routeIs('modules.all') ? 'active' : '' }}">
                             All Modules
                         </a>
                         <a href="{{ route('modules.my') }}" class="nav-dropdown-item {{ request()->routeIs('modules.my') ? 'active' : '' }}">
@@ -161,13 +193,6 @@
                         </a>
                     </div>
                 </div>
-
-                <a href="{{ route('certificates.index') }}" class="nav-link {{ request()->routeIs('certificates.*') ? 'active' : '' }}">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                    </svg>
-                    Certificates
-                </a>
             </div>
 
             <div class="nav-section">

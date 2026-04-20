@@ -205,9 +205,7 @@ main {
     border-bottom: none;
 }
 
-/* ========================================
-   Badges
-   ======================================== */
+/* Badges */
 .badge {
     display: inline-block;
     padding: 0.2rem 0.625rem;
@@ -406,6 +404,406 @@ main {
     color: #991b1b;
 }
 
+/* Pagination - Consistent with Studyhive theme */
+.pagination-wrapper {
+    margin-top: 1rem;
+    padding: 0 1rem 1rem;
+}
+
+.pagination-wrapper ul,
+.pagination ul {
+    list-style: none;
+    display: flex;
+    gap: 0.25rem;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+}
+
+.pagination-wrapper li,
+.pagination li {
+    display: inline-block;
+    margin: 0;
+}
+
+.pagination-wrapper li a,
+.pagination-wrapper li span,
+.pagination li a,
+.pagination li span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.25rem;
+    height: 2.25rem;
+    padding: 0 0.625rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #2d3748;
+    background-color: #ffffff;
+    border: 1px solid #dfe3e8;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.pagination-wrapper li a:hover,
+.pagination li a:hover {
+    background-color: #f0f7f2;
+    border-color: #2d5a3d;
+    color: #2d5a3d;
+}
+
+.pagination-wrapper li.active span,
+.pagination li.active span {
+    background-color: #2d5a3d;
+    border-color: #2d5a3d;
+    color: #ffffff;
+}
+
+.pagination-wrapper li.disabled span,
+.pagination li.disabled span,
+.pagination-wrapper li span:disabled,
+.pagination li span:disabled {
+    background-color: #f8faf9;
+    border-color: #e2e8e4;
+    color: #a8a29e;
+    cursor: not-allowed;
+}
+
+/* Pagination numbers */
+.pagination-wrapper li span.page-num,
+.pagination li span.page-num {
+    background-color: transparent;
+    border-color: transparent;
+    color: #2d3748;
+    min-width: 2rem;
+}
+
+.pagination-wrapper li.active span.page-num,
+.pagination li.active span.page-num {
+    background-color: #2d5a3d;
+    border-color: #2d5a3d;
+    color: #ffffff;
+}
+
+/* Pagination arrows */
+.pagination-wrapper li svg,
+.pagination li svg {
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* Hide broken/unstyled SVGs from Bootstrap */
+.pagination-wrapper svg.bi,
+.pagination-wrapper svg.d-none,
+.pagination-wrapper svg[aria-hidden="true"],
+.pagination svg.bi,
+.pagination svg.d-none,
+.pagination svg[aria-hidden="true"] {
+    display: none !important;
+}
+
+/* Fix for any remaining large SVG icons */
+.pagination-wrapper .page-link > svg,
+.pagination .page-link > svg {
+    width: 14px !important;
+    height: 14px !important;
+    display: inline-flex !important;
+}
+
+.pagination-wrapper .page-link,
+.pagination .page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.25rem;
+    height: 2.25rem;
+    padding: 0 0.625rem;
+    border-radius: 6px;
+    color: #2d3748;
+    background-color: #ffffff;
+    border: 1px solid #dfe3e8;
+    transition: all 0.2s ease;
+}
+
+.pagination-wrapper .page-link:hover,
+.pagination .page-link:hover {
+    background-color: #f0f7f2;
+    border-color: #2d5a3d;
+    color: #2d5a3d;
+}
+
+.pagination-wrapper .page-item.active .page-link,
+.pagination .page-item.active .page-link {
+    background-color: #2d5a3d;
+    border-color: #2d5a3d;
+    color: #ffffff;
+}
+
+.pagination-wrapper .page-item.disabled .page-link,
+.pagination .page-item.disabled .page-link {
+    background-color: #f8faf9;
+    border-color: #e2e8e4;
+    color: #a8a29e;
+    cursor: not-allowed;
+}
+
+/* Pagination container */
+.pagination-wrapper nav {
+    display: block;
+    width: 100%;
+}
+
+nav:empty {
+    display: none;
+}
+
+/* ========================================
+   Pagination Fix - Direct in CSS
+   ======================================== */
+
+/* Hide ALL SVG icons in Bootstrap pagination - keep text only */
+.pagination svg,
+.pagination svg.bi-chevron-left,
+.pagination svg.bi-chevron-right,
+.pagination svg.d-none,
+.pagination svg[role="img"],
+.pagination svg[aria-hidden="true"],
+.pagination-wrapper svg,
+.pagination-wrapper svg.bi-chevron-left,
+.pagination-wrapper svg.bi-chevron-right,
+.pagination-wrapper svg.d-none,
+.pagination-wrapper svg[role="img"],
+.pagination-wrapper svg[aria-hidden="true"] {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    max-width: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Remove image elements used as backgrounds */
+.pagination li a img,
+.pagination li span img,
+.pagination-wrapper li a img,
+.pagination-wrapper li span img {
+    display: none !important;
+}
+
+/* Main pagination wrapper */
+.pagination-wrapper {
+    margin-top: 1rem;
+    padding: 0 1rem 1rem;
+    text-align: center;
+}
+
+.pagination-wrapper ul,
+.pagination ul {
+    list-style: none;
+    display: inline-flex;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    justify-content: center;
+}
+
+.pagination-wrapper li,
+.pagination li {
+    display: inline-block;
+    margin: 0;
+}
+
+/* Page links - buttons */
+.pagination-wrapper .page-link,
+.pagination .page-link {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.25rem;
+    height: 2.25rem;
+    padding: 0 0.625rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #2d3748 !important;
+    background-color: #ffffff !important;
+    border: 1px solid #dfe3e8 !important;
+    text-decoration: none !important;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.pagination-wrapper .page-link:hover,
+.pagination .page-link:hover {
+    background-color: #f0f7f2 !important;
+    border-color: #2d5a3d !important;
+    color: #2d5a3d !important;
+}
+
+/* Active page */
+.pagination-wrapper .page-item.active .page-link,
+.pagination .page-item.active .page-link {
+    background-color: #2d5a3d !important;
+    border-color: #2d5a3d !important;
+    color: #ffffff !important;
+}
+
+/* Disabled page */
+.pagination-wrapper .page-item.disabled .page-link,
+.pagination .page-item.disabled .page-link {
+    background-color: #f8faf9 !important;
+    border-color: #e2e8e4 !important;
+    color: #a8a29e !important;
+    cursor: not-allowed;
+}
+
+/* Previous/Next buttons - hide SVGs, show text only */
+nav[aria-label="Pagination Navigation"] span svg,
+nav[aria-label="Pagination Navigation"] a svg {
+    display: none !important;
+}
+
+/* Page numbers styling */
+.pagination-wrapper li .page-link,
+.pagination li .page-link {
+    text-align: center;
+}
+
+/* ========================================
+   "Showing X to Y of Z results" text
+   ======================================== */
+.pagination-wrapper ~ div:not(.pagination),
+.pagination .text-muted,
+.pagination small,
+.pagination .text-sm {
+    font-size: 0.8rem;
+    color: #706f6c;
+}
+
+/* Results info container - target the div that contains "Showing..." */
+.pagination-wrapper + div,
+.pagination-wrapper ~ div[style*="text-align"],
+nav[aria-label="Pagination"] > div:last-child,
+.pagination > div:last-child {
+    margin-top: 0.75rem;
+    text-align: center;
+    font-size: 0.8rem;
+    color: #706f6c;
+}
+
+/* Alternative: wrap results text */
+.pagination-results {
+    display: block;
+    text-align: center;
+    margin-top: 0.75rem;
+    font-size: 0.8rem;
+    color: #706f6c;
+}
+
+/* Fix Bootstrap's row/col for results */
+.pagination .row,
+.pagination .col {
+    display: none;
+}
+
+/* Hide results row if empty */
+.pagination nav .row:empty {
+    display: none;
+}
+
+/* ========================================
+   "Showing X to Y of Z results" text styling
+   ======================================== */
+.pagination-wrapper .text-sm,
+.pagination .text-sm,
+.pagination-wrapper small,
+.pagination small,
+.pagination-wrapper .text-muted,
+.pagination .text-muted {
+    font-size: 0.8rem;
+    color: #706f6c;
+    font-weight: 400;
+}
+
+/* Results count container */
+.pagination-wrapper nav > div:has(small),
+.pagination nav > div:has(small) {
+    text-align: center;
+    margin-top: 0.75rem;
+}
+
+.pagination-wrapper nav > div:has(.text-sm),
+.pagination nav > div:has(.text-sm) {
+    text-align: center;
+    margin-top: 0.5rem;
+}
+
+/* Wrap results text in styled container */
+.results-info {
+    text-align: center;
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: #706f6c;
+}
+
+/* Style small text in pagination */
+.pagination-wrapper .col,
+.pagination .col {
+    text-align: center;
+}
+
+.pagination-wrapper .row,
+.pagination .row {
+    justify-content: center;
+}
+
+/* ========================================
+   Previous/Next buttons styling
+   ======================================== */
+.pagination-wrapper li:first-child a,
+.pagination li:first-child a,
+.pagination-wrapper li:first-child span,
+.pagination li:first-child span {
+    border-radius: 6px 0 0 6px;
+    padding-left: 0.75rem;
+}
+
+.pagination-wrapper li:last-child a,
+.pagination li:last-child a,
+.pagination-wrapper li:last-child span,
+.pagination li:last-child span {
+    border-radius: 0 6px 6px 0;
+    padding-right: 0.75rem;
+}
+
+/* Ensure previous/next have proper min-width */
+.pagination-wrapper li:first-child a,
+.pagination-wrapper li:last-child a {
+    min-width: 4.5rem;
+}
+
+/* ========================================
+   Additional fixes for Bootstrap 5 pagination
+   ======================================== */
+.pagination-wrapper .page-link i,
+.pagination .page-link i {
+    font-style: normal;
+    font-size: 0.875rem;
+}
+
+/* Reset any SVG that might be causing issues */
+* .pagination svg {
+    width: 14px !important;
+    height: 14px !important;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .main-content {
@@ -437,5 +835,21 @@ main {
 
     .form-row {
         grid-template-columns: 1fr;
+    }
+
+    /* Pagination responsive */
+    .pagination-wrapper ul,
+    .pagination ul {
+        flex-wrap: wrap;
+    }
+
+    .pagination-wrapper li a,
+    .pagination-wrapper li span,
+    .pagination li a,
+    .pagination li span {
+        min-width: 2rem;
+        height: 2rem;
+        font-size: 0.8rem;
+        padding: 0 0.5rem;
     }
 }

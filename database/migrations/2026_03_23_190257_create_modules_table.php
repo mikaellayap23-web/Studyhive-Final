@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -23,6 +23,7 @@ return new class extends Migration
             $table->enum('status', ['draft', 'published'])->default('draft');
             $table->integer('order')->default(0);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
