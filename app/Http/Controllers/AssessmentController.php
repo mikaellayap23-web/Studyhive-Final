@@ -6,7 +6,6 @@ use App\Models\Assessment;
 use App\Models\AssessmentSubmission;
 use App\Models\Module;
 use App\Models\User;
-use App\Services\CertificateService;
 use App\Services\GradeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -275,15 +274,6 @@ class AssessmentController extends Controller
         // Use GradeService for processing with transaction
         $gradeService = app(GradeService::class);
         $submission = $gradeService->processSubmission($assessment, $user->id);
-
-        // Auto-issue certificate if passed
-        if ($submission->status === 'passed') {
-            $certService = app(CertificateService::class);
-            $module = $assessment->module;
-            if ($module && $certService->isModuleCompleted($user, $module)) {
-                $certService->generateCertificate($user, $module);
-            }
-        }
 
         return redirect()->route('assessments.results', $submission->id);
     }

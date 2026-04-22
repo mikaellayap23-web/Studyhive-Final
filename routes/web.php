@@ -4,11 +4,8 @@ use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AuditTrailController;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\BulkEmailController;
-use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EnrollmentController;
-use App\Http\Controllers\ExportController;
 use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\ModuleProgressController;
 use App\Http\Controllers\ProfileController;
@@ -90,7 +87,6 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/modules/{module}/print', [ModuleController::class, 'print'])->name('modules.print');
     Route::get('/assessments/submissions/{submission}/print', [AssessmentController::class, 'printResults'])->name('assessments.results.print');
-    Route::get('/certificates/{certificate}/print', [CertificateController::class, 'print'])->name('certificates.print');
 });
 
 // Assessment Routes
@@ -109,25 +105,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/assessments/submissions/{submission}', [AssessmentController::class, 'results'])->name('assessments.results');
     Route::get('/assessments/submissions/{submission}/print', [AssessmentController::class, 'printResults'])->name('assessments.results.print');
     Route::get('/assessments/{assessment}/submissions', [AssessmentController::class, 'submissions'])->name('assessments.submissions');
-
-    // Export assessment results
-    Route::get('/assessments/{assessment}/export', [ExportController::class, 'assessmentResults'])->name('exports.assessment.results');
-});
-
-// Certificate Verification (public, no auth)
-Route::get('/certificates/verify', [CertificateController::class, 'verify'])->name('certificates.verify');
-
-// Certificate Routes (auth required)
-Route::middleware(['auth'])->group(function () {
-    Route::get('/certificates', [CertificateController::class, 'index'])->name('certificates.index');
-    Route::get('/certificates/{certificate}', [CertificateController::class, 'show'])->name('certificates.show');
-    Route::get('/certificates/{certificate}/download', [CertificateController::class, 'download'])->name('certificates.download');
-    Route::get('/certificates/{certificate}/print', [CertificateController::class, 'print'])->name('certificates.print');
-
-    // Export grades and completion reports
-    Route::get('/exports/grades', [ExportController::class, 'grades'])->name('exports.grades');
-    Route::get('/exports/completion', [ExportController::class, 'completion'])->name('exports.completion');
-    Route::get('/exports/assessment-results/{assessment}', [ExportController::class, 'assessmentResults'])->name('exports.assessment.results');
 });
 
 // Admin Routes
@@ -148,11 +125,4 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     // Audit Trail
     Route::get('/audit-trail', [AuditTrailController::class, 'index'])->name('audit-trail');
-
-    // Certificate Management
-    Route::get('/certificates', [CertificateController::class, 'adminIndex'])->name('certificates.index');
-
-    // Bulk Email
-    Route::get('/bulk-email', [BulkEmailController::class, 'create'])->name('bulk-email.create');
-    Route::post('/bulk-email', [BulkEmailController::class, 'send'])->name('bulk-email.send');
 });

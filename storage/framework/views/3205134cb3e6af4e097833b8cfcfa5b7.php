@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="<?php echo e(str_replace('_', '-', app()->getLocale())); ?>">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $module->title }} - Studyhive</title>
+    <title><?php echo e($module->title); ?> - Studyhive</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700" rel="stylesheet" />
-    <link rel="stylesheet" href="{{ asset('css/sidebar.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/modules.css') }}">
+    <link rel="stylesheet" href="<?php echo e(asset('css/sidebar.css')); ?>">
+    <link rel="stylesheet" href="<?php echo e(asset('css/modules.css')); ?>">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <style>
         .module-detail {
@@ -175,7 +175,26 @@
 </head>
 <body>
     <!-- Sidebar -->
-    <x-sidebar />
+    <?php if (isset($component)) { $__componentOriginal2880b66d47486b4bfeaf519598a469d6 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal2880b66d47486b4bfeaf519598a469d6 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.sidebar','data' => []] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('sidebar'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes([]); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal2880b66d47486b4bfeaf519598a469d6)): ?>
+<?php $attributes = $__attributesOriginal2880b66d47486b4bfeaf519598a469d6; ?>
+<?php unset($__attributesOriginal2880b66d47486b4bfeaf519598a469d6); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal2880b66d47486b4bfeaf519598a469d6)): ?>
+<?php $component = $__componentOriginal2880b66d47486b4bfeaf519598a469d6; ?>
+<?php unset($__componentOriginal2880b66d47486b4bfeaf519598a469d6); ?>
+<?php endif; ?>
 
     <!-- Main Content -->
     <div class="main-content">
@@ -183,7 +202,7 @@
         <header>
             <div class="container">
                 <div class="header-content">
-                    <h1 class="page-title">{{ $module->title }}</h1>
+                    <h1 class="page-title"><?php echo e($module->title); ?></h1>
                 </div>
             </div>
         </header>
@@ -194,30 +213,35 @@
                 <div class="module-detail">
                     <!-- Header -->
                     <div class="module-detail-header">
-                        <h2 class="module-detail-title">{{ $module->title }}</h2>
+                        <h2 class="module-detail-title"><?php echo e($module->title); ?></h2>
                         <div class="module-detail-meta">
-                            <span class="status-badge status-{{ $module->status }}">
-                                {{ ucfirst($module->status) }}
+                            <span class="status-badge status-<?php echo e($module->status); ?>">
+                                <?php echo e(ucfirst($module->status)); ?>
+
                             </span>
                             <span style="color: #718096; font-size: 0.875rem;">
-                                <strong>Created by:</strong> {{ $module->user->first_name }} {{ $module->user->last_name }}
+                                <strong>Created by:</strong> <?php echo e($module->user->first_name); ?> <?php echo e($module->user->last_name); ?>
+
                             </span>
-                            @if($module->assignedTeacher)
+                            <?php if($module->assignedTeacher): ?>
                                 <span style="color: #718096; font-size: 0.875rem;">
-                                    <strong>Teacher:</strong> {{ $module->assignedTeacher->first_name }} {{ $module->assignedTeacher->last_name }}
+                                    <strong>Teacher:</strong> <?php echo e($module->assignedTeacher->first_name); ?> <?php echo e($module->assignedTeacher->last_name); ?>
+
                                 </span>
-                            @endif
+                            <?php endif; ?>
                             <span style="color: #718096; font-size: 0.875rem;">
-                                <strong>Order:</strong> {{ $module->order }}
+                                <strong>Order:</strong> <?php echo e($module->order); ?>
+
                             </span>
                             <span style="color: #718096; font-size: 0.875rem;">
-                                <strong>Published:</strong> {{ $module->created_at->format('M d, Y') }}
+                                <strong>Published:</strong> <?php echo e($module->created_at->format('M d, Y')); ?>
+
                             </span>
                         </div>
                         <div style="display: flex; gap: 0.75rem; margin-top: 1rem; flex-wrap: wrap;">
-                            @if(auth()->user()->role === 'admin' || auth()->user()->role === 'teacher')
-                                @if(auth()->user()->role === 'admin' || $module->assigned_teacher_id === auth()->id())
-                                    <a href="{{ route('modules.students', $module->id) }}" class="btn btn-primary btn-sm">
+                            <?php if(auth()->user()->role === 'admin' || auth()->user()->role === 'teacher'): ?>
+                                <?php if(auth()->user()->role === 'admin' || $module->assigned_teacher_id === auth()->id()): ?>
+                                    <a href="<?php echo e(route('modules.students', $module->id)); ?>" class="btn btn-primary btn-sm">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                             <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
                                             <circle cx="9" cy="7" r="4"/>
@@ -226,10 +250,10 @@
                                         </svg>
                                         Manage Students
                                     </a>
-                                @endif
-                            @endif
-                            @if(auth()->user()->role === 'student')
-                                @if($isEnrolled)
+                                <?php endif; ?>
+                            <?php endif; ?>
+                            <?php if(auth()->user()->role === 'student'): ?>
+                                <?php if($isEnrolled): ?>
                                     <span style="color: #48bb78; font-size: 0.875rem; font-weight: 600; display: flex; align-items: center; gap: 0.25rem;">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                             <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
@@ -237,7 +261,7 @@
                                         </svg>
                                         Enrolled
                                     </span>
-                                @elseif($moduleCompleted)
+                                <?php elseif($moduleCompleted): ?>
                                     <span style="color: #16a34a; font-size: 0.875rem; font-weight: 600; display: flex; align-items: center; gap: 0.25rem;">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                             <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
@@ -245,9 +269,9 @@
                                         </svg>
                                         Completed
                                     </span>
-                                @else
-                                    <form action="{{ route('modules.enroll', $module->id) }}" method="POST" style="display: inline;">
-                                        @csrf
+                                <?php else: ?>
+                                    <form action="<?php echo e(route('modules.enroll', $module->id)); ?>" method="POST" style="display: inline;">
+                                        <?php echo csrf_field(); ?>
                                         <button type="submit" class="btn btn-primary btn-sm">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
@@ -258,15 +282,15 @@
                                             Enroll to Access
                                         </button>
                                     </form>
-                                @endif
-                            @endif
-                            <a href="{{ auth()->user()->role === 'student' ? route('modules.all') : route('modules.index') }}" class="btn btn-secondary btn-sm">
+                                <?php endif; ?>
+                            <?php endif; ?>
+                            <a href="<?php echo e(auth()->user()->role === 'student' ? route('modules.all') : route('modules.index')); ?>" class="btn btn-secondary btn-sm">
                                 Back to Modules
                             </a>
                         </div>
                     </div>
 
-                    @if(auth()->user()->role === 'student' && !$isEnrolled && !$moduleCompleted)
+                    <?php if(auth()->user()->role === 'student' && !$isEnrolled && !$moduleCompleted): ?>
                         <!-- Enrollment Notice for Non-Enrolled Students -->
                         <div class="enrollment-notice">
                             <h3>
@@ -278,14 +302,14 @@
                                 Enrollment Required
                             </h3>
                             <p>You need to enroll in this module to access the full content. Enrolling is free and gives you access to all learning materials.</p>
-                            <form action="{{ route('modules.enroll', $module->id) }}" method="POST" style="display: inline;">
-                                @csrf
+                            <form action="<?php echo e(route('modules.enroll', $module->id)); ?>" method="POST" style="display: inline;">
+                                <?php echo csrf_field(); ?>
                                 <button type="submit" class="btn btn-primary">
                                     Enroll Now
                                 </button>
                             </form>
                         </div>
-                    @elseif(auth()->user()->role === 'student' && $moduleCompleted)
+                    <?php elseif(auth()->user()->role === 'student' && $moduleCompleted): ?>
                         <!-- Completed Module Notice -->
                         <div class="enrollment-notice" style="background: #f0fdf4; border-color: #bbf7d0;">
                             <h3 style="color: #166534;">
@@ -297,13 +321,13 @@
                             </h3>
                             <p style="color: #15803d;">You have already completed this module. You can view the module details but materials and assessments are no longer accessible.</p>
                         </div>
-                    @endif
+                    <?php endif; ?>
 
                     <!-- Description -->
                     <div class="module-detail-body">
                         <div class="module-detail-section">
                             <h3>Description</h3>
-                            <p>{{ $module->description ?? 'No description available.' }}</p>
+                            <p><?php echo e($module->description ?? 'No description available.'); ?></p>
                         </div>
                     </div>
 
@@ -311,7 +335,7 @@
                     <div class="module-detail-body">
                         <div class="module-detail-section">
                             <h3>Module Content</h3>
-                            @if(auth()->user()->role === 'student' && !$isEnrolled)
+                            <?php if(auth()->user()->role === 'student' && !$isEnrolled): ?>
                                 <div class="blurred-content">
                                     <p>This is a preview of the module content. Enroll to access the complete learning materials, including detailed lessons, resources, and downloadable files.</p>
                                     <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
@@ -320,13 +344,13 @@
                                 <p style="text-align: center; color: #718096; font-size: 0.875rem; margin-top: 1rem;">
                                     🔒 Enroll to unlock full content
                                 </p>
-                            @else
-                                <p>{{ $module->content ?? 'No content available for this module.' }}</p>
-                             @endif
+                            <?php else: ?>
+                                <p><?php echo e($module->content ?? 'No content available for this module.'); ?></p>
+                             <?php endif; ?>
                          </div>
                      </div>
 
-                     @if($module->prerequisite)
+                     <?php if($module->prerequisite): ?>
                          <div class="module-detail-body" style="background: #fef3c7; border-color: #fcd34d;">
                              <div class="module-detail-section">
                                  <h3 style="color: #92400e; display: flex; align-items: center; gap: 0.5rem;">
@@ -338,18 +362,18 @@
                                      Prerequisite Required
                                  </h3>
                                  <p style="color: #78350f;">
-                                     You must complete <strong>{{ $module->prerequisite->title }}</strong> before you can enroll in this module.
-                                     @if($isEnrolled)
+                                     You must complete <strong><?php echo e($module->prerequisite->title); ?></strong> before you can enroll in this module.
+                                     <?php if($isEnrolled): ?>
                                          <span style="display: block; margin-top: 0.5rem; color: #b45309;">
                                              ⚠️ You are enrolled but missing the prerequisite. Contact your instructor if you believe this is an error.
                                          </span>
-                                     @endif
+                                     <?php endif; ?>
                                  </p>
                              </div>
                          </div>
-                     @endif
+                     <?php endif; ?>
 
-                     @if(auth()->user()->role === 'student' && !$isEnrolled)
+                     <?php if(auth()->user()->role === 'student' && !$isEnrolled): ?>
                                     <p style="color: #718096; font-size: 0.875rem;">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 0.25rem;">
                                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
@@ -357,7 +381,7 @@
                                         </svg>
                                         Materials are available after enrollment
                                     </p>
-                                @elseif(auth()->user()->role === 'student' && $moduleCompleted)
+                                <?php elseif(auth()->user()->role === 'student' && $moduleCompleted): ?>
                                     <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 1.5rem; text-align: center;">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: #16a34a; margin: 0 auto 0.75rem;">
                                             <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
@@ -366,13 +390,13 @@
                                         <h4 style="margin: 0 0 0.5rem 0; color: #166534;">Module Completed</h4>
                                         <p style="color: #15803d; font-size: 0.875rem;">You have completed this module. Materials are no longer accessible.</p>
                                     </div>
-                                @elseif(auth()->user()->role === 'student' && $isEnrolled)
-                                    @php
+                                <?php elseif(auth()->user()->role === 'student' && $isEnrolled): ?>
+                                    <?php
                                         $fileExt = strtolower(pathinfo($module->file_path, PATHINFO_EXTENSION));
                                         $isPdf = $fileExt === 'pdf';
-                                    @endphp
+                                    ?>
 
-                                    @if($isPdf)
+                                    <?php if($isPdf): ?>
                                         <!-- PDF Viewer with Progress Tracking -->
                                         <div class="pdf-viewer-container" id="pdfViewerContainer">
                                             <div id="pdfPagesContainer" class="pdf-pages-container"></div>
@@ -387,21 +411,21 @@
                                                 <div class="pdf-progress-fill" id="pdfProgressFill" style="width: 0%;"></div>
                                             </div>
                                         </div>
-                                    @else
+                                    <?php else: ?>
                                         <p style="color: #718096; font-size: 0.875rem;">
                                             This module has materials in a format that is not yet supported. Please contact your teacher for access.
                                         </p>
-                                    @endif
+                                    <?php endif; ?>
                             </div>
                         </div>
-                    @endif
+                    <?php endif; ?>
 
                     <!-- Assessment Section -->
-                    @php
+                    <?php
                         $assessment = $module->assessment;
-                    @endphp
+                    ?>
                     
-                    @if($assessment)
+                    <?php if($assessment): ?>
                         <div class="module-detail-body">
                             <div class="module-detail-section">
                                 <h3>
@@ -412,8 +436,8 @@
                                     Assessment
                                 </h3>
 
-                                @if(auth()->user()->role === 'student' && $moduleCompleted)
-                                    {{-- Completed module - hide assessment --}}
+                                <?php if(auth()->user()->role === 'student' && $moduleCompleted): ?>
+                                    
                                     <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 1.5rem; text-align: center;">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: #16a34a; margin: 0 auto 0.75rem;">
                                             <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
@@ -422,8 +446,8 @@
                                         <h4 style="margin: 0 0 0.5rem 0; color: #166534;">Module Completed</h4>
                                         <p style="color: #15803d; font-size: 0.875rem;">You have already completed this assessment. Results are no longer accessible.</p>
                                     </div>
-                                @elseif(auth()->user()->role === 'student' && !$isEnrolled)
-                                    {{-- Show lock message for non-enrolled students --}}
+                                <?php elseif(auth()->user()->role === 'student' && !$isEnrolled): ?>
+                                    
                                     <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.5rem; text-align: center;">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: #94a3b8; margin: 0 auto 1rem;">
                                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
@@ -431,43 +455,43 @@
                                         </svg>
                                         <p style="color: #475569; font-weight: 600; margin-bottom: 0.5rem;">Assessment Available</p>
                                         <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">Enroll in this module to access the assessment</p>
-                                        <form action="{{ route('modules.enroll', $module->id) }}" method="POST" style="display: inline;">
-                                            @csrf
+                                        <form action="<?php echo e(route('modules.enroll', $module->id)); ?>" method="POST" style="display: inline;">
+                                            <?php echo csrf_field(); ?>
                                             <button type="submit" class="btn btn-primary">
                                                 Enroll Now
                                             </button>
                                         </form>
                                     </div>
-                                @elseif(auth()->user()->role === 'student' && $isEnrolled)
-                                    {{-- Show take assessment button for enrolled students --}}
-                                    @if($assessment->is_published)
-                                        @php
+                                <?php elseif(auth()->user()->role === 'student' && $isEnrolled): ?>
+                                    
+                                    <?php if($assessment->is_published): ?>
+                                        <?php
                                             $latestSubmission = $assessment->latestSubmission(auth()->user());
                                             $canTake = $assessment->canUserTake(auth()->user());
                                             $remainingAttempts = $assessment->getRemainingAttempts(auth()->user());
                                             $hasUnlimitedAttempts = $remainingAttempts === -1;
                                             $progressPercent = $moduleProgress ? $moduleProgress->progress : 0;
                                             $canAccessAssessment = $progressPercent >= 100;
-                                        @endphp
+                                        ?>
 
-                                        @if($latestSubmission && !$canTake)
-                                            {{-- Student used all attempts - show best result --}}
-                                            @php
+                                        <?php if($latestSubmission && !$canTake): ?>
+                                            
+                                            <?php
                                                 $bestSubmission = $assessment->bestSubmission(auth()->user());
-                                            @endphp
+                                            ?>
                                             <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.5rem;">
-                                                <h4 style="margin: 0 0 0.5rem 0; color: #475569;">{{ $assessment->title }}</h4>
+                                                <h4 style="margin: 0 0 0.5rem 0; color: #475569;"><?php echo e($assessment->title); ?></h4>
                                                 <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">You have used all your attempts for this assessment.</p>
                                                 <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; font-size: 0.875rem; color: #64748b;">
-                                                    <span>📊 Best Score: <strong style="color: {{ $bestSubmission->percentage >= $assessment->passing_score ? '#16a34a' : '#dc2626' }}">{{ number_format($bestSubmission->percentage, 1) }}%</strong></span>
-                                                    <span>📝 Attempts: {{ $assessment->getUserAttempts(auth()->user()) }}/{{ $assessment->max_attempts }}</span>
+                                                    <span>📊 Best Score: <strong style="color: <?php echo e($bestSubmission->percentage >= $assessment->passing_score ? '#16a34a' : '#dc2626'); ?>"><?php echo e(number_format($bestSubmission->percentage, 1)); ?>%</strong></span>
+                                                    <span>📝 Attempts: <?php echo e($assessment->getUserAttempts(auth()->user())); ?>/<?php echo e($assessment->max_attempts); ?></span>
                                                 </div>
-                                                <a href="{{ route('assessments.results', $bestSubmission->id) }}" class="btn btn-secondary">
+                                                <a href="<?php echo e(route('assessments.results', $bestSubmission->id)); ?>" class="btn btn-secondary">
                                                     View Results
                                                 </a>
                                             </div>
-                                        @elseif(!$canAccessAssessment)
-                                            {{-- Progress not 100% - lock assessment --}}
+                                        <?php elseif(!$canAccessAssessment): ?>
+                                            
                                             <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 1.5rem; text-align: center;">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: #d97706; margin: 0 auto 0.75rem;">
                                                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
@@ -475,53 +499,54 @@
                                                 </svg>
                                                 <h4 style="margin: 0 0 0.5rem 0; color: #92400e;">Assessment Locked</h4>
                                                 <p style="color: #78350f; font-size: 0.875rem; margin-bottom: 0.5rem;">Complete the module materials to unlock the assessment.</p>
-                                                <p style="color: #78350f; font-size: 0.875rem; font-weight: 600;">Current Progress: {{ $progressPercent }}%</p>
+                                                <p style="color: #78350f; font-size: 0.875rem; font-weight: 600;">Current Progress: <?php echo e($progressPercent); ?>%</p>
                                             </div>
-                                        @elseif($latestSubmission)
-                                            {{-- Student has taken but can retake --}}
+                                        <?php elseif($latestSubmission): ?>
+                                            
                                             <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 1.5rem;">
-                                                <h4 style="margin: 0 0 0.5rem 0; color: #0369a1;">{{ $assessment->title }}</h4>
-                                                @if($assessment->description)
-                                                    <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">{{ $assessment->description }}</p>
-                                                @endif
+                                                <h4 style="margin: 0 0 0.5rem 0; color: #0369a1;"><?php echo e($assessment->title); ?></h4>
+                                                <?php if($assessment->description): ?>
+                                                    <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;"><?php echo e($assessment->description); ?></p>
+                                                <?php endif; ?>
                                                 <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 6px; padding: 0.75rem; margin-bottom: 1rem; font-size: 0.875rem; color: #92400e;">
-                                                    <strong>Last Attempt:</strong> {{ number_format($latestSubmission->percentage, 1) }}%
-                                                    ({{ $latestSubmission->status === 'passed' ? '✓ Passed' : '✗ Needs Improvement' }})
-                                                    @if(!$hasUnlimitedAttempts)
-                                                        | <strong>Attempts Remaining:</strong> {{ $remainingAttempts }}
-                                                    @endif
+                                                    <strong>Last Attempt:</strong> <?php echo e(number_format($latestSubmission->percentage, 1)); ?>%
+                                                    (<?php echo e($latestSubmission->status === 'passed' ? '✓ Passed' : '✗ Needs Improvement'); ?>)
+                                                    <?php if(!$hasUnlimitedAttempts): ?>
+                                                        | <strong>Attempts Remaining:</strong> <?php echo e($remainingAttempts); ?>
+
+                                                    <?php endif; ?>
                                                 </div>
                                                 <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                                                    <a href="{{ route('assessments.take', $assessment->id) }}" class="btn btn-primary">
+                                                    <a href="<?php echo e(route('assessments.take', $assessment->id)); ?>" class="btn btn-primary">
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
                                                             <path d="M23 4v6h-6"/>
                                                             <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
                                                         </svg>
                                                         Retake Assessment
                                                     </a>
-                                                    <a href="{{ route('assessments.results', $latestSubmission->id) }}" class="btn btn-secondary">
+                                                    <a href="<?php echo e(route('assessments.results', $latestSubmission->id)); ?>" class="btn btn-secondary">
                                                         View Results
                                                     </a>
                                                 </div>
                                             </div>
-                                        @else
-                                            {{-- First attempt --}}
+                                        <?php else: ?>
+                                            
                                             <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 1.5rem;">
-                                                <h4 style="margin: 0 0 0.5rem 0; color: #0369a1;">{{ $assessment->title }}</h4>
-                                                @if($assessment->description)
-                                                    <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">{{ $assessment->description }}</p>
-                                                @endif
+                                                <h4 style="margin: 0 0 0.5rem 0; color: #0369a1;"><?php echo e($assessment->title); ?></h4>
+                                                <?php if($assessment->description): ?>
+                                                    <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;"><?php echo e($assessment->description); ?></p>
+                                                <?php endif; ?>
                                                 <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; font-size: 0.875rem; color: #64748b;">
-                                                    <span>⏱️ {{ $assessment->duration_minutes }} minutes</span>
-                                                    <span>✓ Passing: {{ $assessment->passing_score }}%</span>
-                                                    <span>📝 {{ count($assessment->questions) }} questions</span>
-                                                    @if(!$hasUnlimitedAttempts)
-                                                        <span>📊 Max Attempts: {{ $assessment->max_attempts }}</span>
-                                                    @else
+                                                    <span>⏱️ <?php echo e($assessment->duration_minutes); ?> minutes</span>
+                                                    <span>✓ Passing: <?php echo e($assessment->passing_score); ?>%</span>
+                                                    <span>📝 <?php echo e(count($assessment->questions)); ?> questions</span>
+                                                    <?php if(!$hasUnlimitedAttempts): ?>
+                                                        <span>📊 Max Attempts: <?php echo e($assessment->max_attempts); ?></span>
+                                                    <?php else: ?>
                                                         <span>📊 Unlimited Attempts</span>
-                                                    @endif
+                                                    <?php endif; ?>
                                                 </div>
-                                                <a href="{{ route('assessments.take', $assessment->id) }}" class="btn btn-primary">
+                                                <a href="<?php echo e(route('assessments.take', $assessment->id)); ?>" class="btn btn-primary">
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
                                                         <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
                                                         <polyline points="14 2 14 8 20 8"/>
@@ -529,42 +554,43 @@
                                                     Take Assessment
                                                 </a>
                                             </div>
-                                        @endif
-                                    @else
+                                        <?php endif; ?>
+                                    <?php else: ?>
                                         <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.5rem; text-align: center;">
                                             <p style="color: #64748b;">Assessment is not yet available</p>
                                         </div>
-                                    @endif
-                                @else
-                                    {{-- Show assessment info for admin/teacher --}}
-                                    @if($assessment)
+                                    <?php endif; ?>
+                                <?php else: ?>
+                                    
+                                    <?php if($assessment): ?>
                                         <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.5rem;">
                                             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
                                                 <div>
-                                                    <h4 style="margin: 0 0 0.5rem 0; color: #1e293b;">{{ $assessment->title }}</h4>
-                                                    @if($assessment->description)
-                                                        <p style="color: #64748b; font-size: 0.875rem; margin: 0 0 1rem 0;">{{ $assessment->description }}</p>
-                                                    @endif
+                                                    <h4 style="margin: 0 0 0.5rem 0; color: #1e293b;"><?php echo e($assessment->title); ?></h4>
+                                                    <?php if($assessment->description): ?>
+                                                        <p style="color: #64748b; font-size: 0.875rem; margin: 0 0 1rem 0;"><?php echo e($assessment->description); ?></p>
+                                                    <?php endif; ?>
                                                     <div style="display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.875rem; color: #64748b;">
-                                                        <span>⏱️ {{ $assessment->duration_minutes }} minutes</span>
-                                                        <span>✓ Passing: {{ $assessment->passing_score }}%</span>
-                                                        <span>📝 {{ count($assessment->questions) }} questions</span>
-                                                        <span class="status-badge {{ $assessment->is_published ? 'status-published' : 'status-draft' }}" style="background: {{ $assessment->is_published ? '#dcfce7' : '#f1f5f9' }}; color: {{ $assessment->is_published ? '#166534' : '#475569' }}; padding: 0.25rem 0.5rem; border-radius: 9999px;">
-                                                            {{ $assessment->is_published ? 'Published' : 'Draft' }}
+                                                        <span>⏱️ <?php echo e($assessment->duration_minutes); ?> minutes</span>
+                                                        <span>✓ Passing: <?php echo e($assessment->passing_score); ?>%</span>
+                                                        <span>📝 <?php echo e(count($assessment->questions)); ?> questions</span>
+                                                        <span class="status-badge <?php echo e($assessment->is_published ? 'status-published' : 'status-draft'); ?>" style="background: <?php echo e($assessment->is_published ? '#dcfce7' : '#f1f5f9'); ?>; color: <?php echo e($assessment->is_published ? '#166534' : '#475569'); ?>; padding: 0.25rem 0.5rem; border-radius: 9999px;">
+                                                            <?php echo e($assessment->is_published ? 'Published' : 'Draft'); ?>
+
                                                         </span>
                                                     </div>
                                                 </div>
                                                 <div style="display: flex; gap: 0.5rem;">
-                                                    @if($assessment->canEdit(auth()->user()))
-                                                        <a href="{{ route('modules.edit', $module->id) }}" class="btn btn-warning btn-sm">
+                                                    <?php if($assessment->canEdit(auth()->user())): ?>
+                                                        <a href="<?php echo e(route('modules.edit', $module->id)); ?>" class="btn btn-warning btn-sm">
                                                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                                 <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
                                                                 <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
                                                             </svg>
                                                             Edit Assessment
                                                         </a>
-                                                    @endif
-                                                    <a href="{{ route('assessments.submissions', $assessment->id) }}" class="btn btn-primary btn-sm">
+                                                    <?php endif; ?>
+                                                    <a href="<?php echo e(route('assessments.submissions', $assessment->id)); ?>" class="btn btn-primary btn-sm">
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                             <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
                                                             <polyline points="14 2 14 8 20 8"/>
@@ -573,9 +599,9 @@
                                                     </a>
                          </div>
                      </div>
-                     @if(auth()->user()->role === 'student' && $isEnrolled)
+                     <?php if(auth()->user()->role === 'student' && $isEnrolled): ?>
                          <div style="margin-top: 1rem; text-align: right;">
-                             <a href="{{ route('modules.print', $module->id) }}" class="btn btn-secondary btn-sm" target="_blank">
+                             <a href="<?php echo e(route('modules.print', $module->id)); ?>" class="btn btn-secondary btn-sm" target="_blank">
                                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 0.25rem;">
                                      <path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
                                      <path d="M6 14h12v8H6z"/>
@@ -583,21 +609,21 @@
                                  Print Summary
                              </a>
                          </div>
-                     @endif
+                     <?php endif; ?>
                  </div>
-                                    @else
+                                    <?php else: ?>
                                         <p style="color: #64748b; font-style: italic;">No assessment created for this module yet.</p>
-                                    @endif
-                                @endif
+                                    <?php endif; ?>
+                                <?php endif; ?>
                             </div>
                         </div>
-                    @endif
+                    <?php endif; ?>
                 </div>
             </div>
         </main>
     </div>
 
-    @if(auth()->user()->role === 'student' && $isEnrolled && $module->file_path && strtolower(pathinfo($module->file_path, PATHINFO_EXTENSION)) === 'pdf')
+    <?php if(auth()->user()->role === 'student' && $isEnrolled && $module->file_path && strtolower(pathinfo($module->file_path, PATHINFO_EXTENSION)) === 'pdf'): ?>
     <script>
         // PDF.js worker configuration
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
@@ -610,7 +636,7 @@
             maxPageReached: 0,  // Track the furthest page reached (never decreases)
             pdfCompleted: false,
             currentPage: 1,
-            moduleId: {{ $module->id }},
+            moduleId: <?php echo e($module->id); ?>,
             enrollmentId: null,
             trackingLocked: false  // Prevent concurrent AJAX calls
         };
@@ -624,7 +650,7 @@
         };
 
         // Load existing progress
-        fetch(`{{ route('modules.progress', $module->id) }}`, {
+        fetch(`<?php echo e(route('modules.progress', $module->id)); ?>`, {
             headers: {
                 'Accept': 'application/json',
             }
@@ -648,7 +674,7 @@
 
         // Load PDF
         if (elements.pagesContainer) {
-            const pdfUrl = '{{ asset('storage/' . $module->file_path) }}';
+            const pdfUrl = '<?php echo e(asset('storage/' . $module->file_path)); ?>';
             console.log('Loading PDF from URL:', pdfUrl);
             
             pdfjsLib.getDocument(pdfUrl).promise
@@ -761,12 +787,12 @@
             updateProgress(state.maxPageReached, state.totalPages);
 
             // Send to server
-            fetch(`{{ route('modules.progress.pdf', $module->id) }}`, {
+            fetch(`<?php echo e(route('modules.progress.pdf', $module->id)); ?>`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
                 },
                 body: JSON.stringify({
                     page: pageNum,
@@ -879,6 +905,7 @@
         `;
         document.head.appendChild(style);
     </script>
-    @endif
+    <?php endif; ?>
 </body>
 </html>
+<?php /**PATH C:\Users\Mikaella\Studyhive-Final\resources\views/modules/show.blade.php ENDPATH**/ ?>

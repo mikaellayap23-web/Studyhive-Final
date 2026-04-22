@@ -70,11 +70,6 @@ class Module extends Model
         return $this->hasMany(ModuleProgress::class);
     }
 
-    public function certificates(): HasMany
-    {
-        return $this->hasMany(Certificate::class);
-    }
-
     /**
      * Check if a user can manage this module (edit/update/delete/manage students)
      */

@@ -66,6 +66,9 @@ class DashboardController extends Controller
 
             foreach ($enrolledModules as $enrollment) {
                 $module = $enrollment->module;
+                if (! $module) {
+                    continue;
+                }
                 if ($module->assessment && $module->assessment->is_published) {
                     // Check if student can take assessment (progress 100% and has attempts)
                     $progress = ModuleProgress::where('user_id', $user->id)
@@ -86,6 +89,7 @@ class DashboardController extends Controller
                             'status' => $latestSubmission->status,
                             'attempt' => $latestSubmission->attempt_number,
                             'submitted_at' => $latestSubmission->submitted_at,
+                            'assessment_passing_score' => $module->assessment->passing_score,
                         ];
                     } elseif ($canAccess && ! $latestSubmission) {
                         $upcomingAssessments[] = [

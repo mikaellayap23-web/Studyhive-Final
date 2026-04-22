@@ -47,14 +47,6 @@
                     <div class="page-header">
                         <h1>Modules</h1>
                         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                            @if(auth()->user()->role === 'teacher')
-                                <a href="{{ route('exports.grades') }}" class="btn btn-secondary" title="Export student grades">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 0.25rem;">
-                                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 4v12"/>
-                                    </svg>
-                                    Export Grades
-                                </a>
-                            @endif
                             @if(auth()->user()->role === 'admin')
                                 <a href="{{ route('admin.users.trash') }}" class="btn btn-secondary">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

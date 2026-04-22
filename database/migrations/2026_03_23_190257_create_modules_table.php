@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('file_path')->nullable();
             $table->enum('status', ['draft', 'published'])->default('draft');
             $table->integer('order')->default(0);
+            $table->foreignId('prerequisite_module_id')->nullable()->constrained('modules')->onDelete('set null');
             $table->timestamps();
             $table->softDeletes();
         });

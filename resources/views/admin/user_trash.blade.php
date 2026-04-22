@@ -8,16 +8,6 @@
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700" rel="stylesheet" />
     <link rel="stylesheet" href="{{ asset('css/sidebar.css') }}">
     <link rel="stylesheet" href="{{ asset('css/user_management.css') }}">
-    <style>
-        .trash-badge {
-            background: #fef2f2;
-            color: #991b1b;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-    </style>
 </head>
 <body>
     <!-- Sidebar -->
@@ -92,68 +82,75 @@
                         </div>
 
                         <!-- Users Table -->
-                        <table class="module-table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 40px;">
-                                        <input type="checkbox" id="select-all-table" onclick="toggleSelectAll()">
-                                    </th>
-                                    <th>Name</th>
-                                    <th>Email</th>
-                                    <th>Role</th>
-                                    <th>Status</th>
-                                    <th>Deleted At</th>
-                                    <th style="width: 150px;">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($users as $user)
-                                    <tr>
-                                        <td>
-                                            <input type="checkbox" name="user_ids[]" value="{{ $user->id }}" class="user-checkbox">
-                                        </td>
-                                        <td>
-                                            <strong>{{ $user->first_name }} {{ $user->last_name }}</strong>
-                                        </td>
-                                        <td>{{ $user->email }}</td>
-                                        <td>
-                                            <span class="role-badge role-{{ $user->role }}">{{ ucfirst($user->role) }}</span>
-                                        </td>
-                                        <td>
-                                            <span class="status-badge status-{{ $user->status }}">{{ ucfirst($user->status) }}</span>
-                                        </td>
-                                        <td>
-                                            <span class="trash-badge">{{ $user->deleted_at->format('M d, Y g:i A') }}</span>
-                                        </td>
-                                        <td>
-                                            <div style="display: flex; gap: 0.25rem;">
-                                                <form action="{{ route('admin.users.trash.restore', $user->id) }}" method="POST" style="display: inline;">
-                                                    @csrf
-                                                    <button type="submit" class="btn btn-secondary btn-sm" title="Restore">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M3 12h18M12 3l-7 7 7 7"/>
-                                                        </svg>
-                                                        Restore
-                                                    </button>
-                                                </form>
-                                                <form action="{{ route('admin.users.trash.forceDelete', $user->id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to permanently delete this user?');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-danger btn-sm" title="Delete Permanently">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                                        </svg>
-                                                        Delete
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-
-                        {{ $users->appends(request()->query())->links() }}
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 40px;">
+                                                    <input type="checkbox" id="select-all-table" onclick="toggleSelectAll()">
+                                                </th>
+                                                <th>Name</th>
+                                                <th>Email</th>
+                                                <th>Role</th>
+                                                <th>Status</th>
+                                                <th>Deleted At</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($users as $user)
+                                                <tr>
+                                                    <td>
+                                                        <input type="checkbox" name="user_ids[]" value="{{ $user->id }}" class="user-checkbox">
+                                                    </td>
+                                                    <td>
+                                                        <strong>{{ $user->first_name }} {{ $user->last_name }}</strong>
+                                                    </td>
+                                                    <td>{{ $user->email }}</td>
+                                                    <td>
+                                                        <span class="badge badge-{{ $user->role }}">{{ ucfirst($user->role) }}</span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge badge-{{ $user->status }}">{{ ucfirst($user->status) }}</span>
+                                                    </td>
+                                                    <td>{{ $user->deleted_at->format('M d, Y g:i A') }}</td>
+                                                    <td>
+                                                        <div class="action-buttons">
+                                                            <form action="{{ route('admin.users.trash.restore', $user->id) }}" method="POST" style="display: inline;">
+                                                                @csrf
+                                                                <button type="submit" class="btn btn-success btn-sm" title="Restore">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                        <path d="M3 12h18M12 3l-7 7 7 7"/>
+                                                                    </svg>
+                                                                    Restore
+                                                                </button>
+                                                            </form>
+                                                            <form action="{{ route('admin.users.trash.forceDelete', $user->id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to permanently delete this user?');">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <button type="submit" class="btn btn-danger btn-sm" title="Delete Permanently">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                        <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                                    </svg>
+                                                                    Delete
+                                                                </button>
+                                                            </form>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                                @if($users->hasPages())
+                                    <div class="pagination-wrapper">
+                                        {{ $users->appends(request()->query())->links() }}
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
                     </form>
                 @else
                     <div class="empty-state">
@@ -169,18 +166,21 @@
     </div>
 
     <script>
+    function toggleSelectAll() {
+        const selectAllTable = document.getElementById('select-all-table');
+        const checkboxes = document.querySelectorAll('.user-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = selectAllTable.checked;
+        });
+        document.getElementById('select-all').checked = selectAllTable.checked;
+    }
+
     document.getElementById('select-all')?.addEventListener('change', function() {
         const checkboxes = document.querySelectorAll('.user-checkbox');
         checkboxes.forEach(checkbox => {
             checkbox.checked = this.checked;
         });
-    });
-
-    document.getElementById('select-all-table')?.addEventListener('change', function() {
-        const checkboxes = document.querySelectorAll('.user-checkbox');
-        checkboxes.forEach(checkbox => {
-            checkbox.checked = this.checked;
-        });
+        document.getElementById('select-all-table').checked = this.checked;
     });
     </script>
 </body>

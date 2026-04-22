@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Enrollment;
 use App\Models\Module;
 use App\Models\ModuleProgress;
-use App\Services\CertificateService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -69,15 +68,6 @@ class ModuleProgressController extends Controller
 
         // Recalculate overall progress
         $this->updateProgress($progress, $module);
-
-        // Auto-issue certificate if module is now completed
-        if ($progress->progress >= 100) {
-            $certService = app(CertificateService::class);
-            $user = Auth::user();
-            if ($certService->isModuleCompleted($user, $module)) {
-                $certService->generateCertificate($user, $module);
-            }
-        }
 
         return response()->json([
             'success' => true,

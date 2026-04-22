@@ -173,15 +173,9 @@
                     </table>
                  </div>
 
-                 <div style="margin-top: 1.5rem; display: flex; gap: 0.75rem;">
-                     <a href="{{ route('exports.assessment.results', $assessment) }}" class="btn btn-secondary">
-                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 0.25rem;">
-                             <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 4v12"/>
-                         </svg>
-                         Export to Excel
-                     </a>
-                     <a href="{{ route('assessments.index') }}" class="btn btn-secondary">Back to Assessments</a>
-                 </div>
+<div style="margin-top: 1.5rem; display: flex; gap: 0.75rem;">
+                      <a href="{{ route('assessments.index') }}" class="btn btn-secondary">Back to Assessments</a>
+                  </div>
             </div>
         </main>
     </div>
