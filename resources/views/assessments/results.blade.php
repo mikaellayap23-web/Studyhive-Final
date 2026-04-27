@@ -280,13 +280,7 @@
                     
                     <a href="{{ route('modules.my') }}" class="btn btn-secondary">Back to My Modules</a>
                     
-                    <a href="{{ route('assessments.results.print', $submission->id) }}" class="btn btn-secondary" target="_blank">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 0.25rem;">
-                            <path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
-                            <path d="M6 14h12v8H6z"/>
-                        </svg>
-                        Print
-                    </a>
+                    <!-- Print functionality removed per request -->
                 </div>
             </div>
         </main>

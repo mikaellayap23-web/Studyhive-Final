@@ -22,6 +22,12 @@ class EnrollmentController extends Controller
             abort(403);
         }
 
+        // Only allow enrollment in published modules
+        if ($module->status !== 'published') {
+            return redirect()->route('modules.all')
+                ->with('error', 'You cannot enroll in an unpublished module.');
+        }
+
         // Check if prerequisite is set and completed
         if ($module->prerequisite_module_id) {
             $prerequisite = Module::find($module->prerequisite_module_id);
@@ -48,18 +54,16 @@ class EnrollmentController extends Controller
             }
         }
 
-        // Optimized single query: find any unfinished module the student is enrolled in
+        // Check if student has any unfinished modules (progress < 100% OR assessment not passed)
         $hasUnfinished = Module::where('status', 'published')
             ->whereHas('enrollments', function ($query) use ($user) {
                 $query->where('user_id', $user->id);
             })
             ->where(function ($query) use ($user) {
-                // Module progress is less than 100%
                 $query->whereHas('progress', function ($q) use ($user) {
                     $q->where('user_id', $user->id)
                         ->where('progress', '<', 100);
                 })
-                // Or module has an assessment that student hasn't passed
                     ->orWhereHas('assessment', function ($q) use ($user) {
                         $q->whereDoesntHave('submissions', function ($sq) use ($user) {
                             $sq->where('user_id', $user->id)

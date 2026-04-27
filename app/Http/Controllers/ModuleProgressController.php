@@ -31,10 +31,14 @@ class ModuleProgressController extends Controller
             'total_pages' => ['nullable', 'integer', 'min:1'],
         ]);
 
-        // Get or create enrollment first
-        $enrollment = Enrollment::firstOrCreate(
-            ['user_id' => $user->id, 'module_id' => $module->id]
-        );
+        // Verify student is enrolled in this module (do not auto-create enrollment)
+        $enrollment = Enrollment::where('user_id', $user->id)
+            ->where('module_id', $module->id)
+            ->first();
+
+        if (! $enrollment) {
+            abort(403, 'You must be enrolled in this module to track progress.');
+        }
 
         // Get or create progress record
         $progress = ModuleProgress::firstOrCreate(

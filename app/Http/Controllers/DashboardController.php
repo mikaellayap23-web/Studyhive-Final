@@ -56,6 +56,21 @@ class DashboardController extends Controller
                 }])
                 ->get();
 
+            // Preload progress for all modules to avoid N+1
+            $moduleIds = $enrolledModules->pluck('module_id');
+            $progressByModule = ModuleProgress::where('user_id', $user->id)
+                ->whereIn('module_id', $moduleIds)
+                ->get()
+                ->keyBy('module_id');
+
+            // Preload latest submissions for all assessments to avoid N+1
+            $assessmentIds = $enrolledModules->pluck('module.assessment.id')->filter();
+            $submissionsByAssessment = AssessmentSubmission::where('user_id', $user->id)
+                ->whereIn('assessment_id', $assessmentIds)
+                ->orderBy('attempt_number', 'desc')
+                ->get()
+                ->groupBy('assessment_id');
+
             // Calculate overall completion percentage
             $totalPublishedModules = Module::where('status', 'published')->count();
             $overallProgress = $totalPublishedModules > 0 ? round(($completedCount / $totalPublishedModules) * 100) : 0;
@@ -70,16 +85,11 @@ class DashboardController extends Controller
                     continue;
                 }
                 if ($module->assessment && $module->assessment->is_published) {
-                    // Check if student can take assessment (progress 100% and has attempts)
-                    $progress = ModuleProgress::where('user_id', $user->id)
-                        ->where('module_id', $module->id)
-                        ->first();
-
+                    // Use preloaded progress
+                    $progress = $progressByModule->get($module->id);
                     $canAccess = $progress && $progress->progress >= 100;
-                    $latestSubmission = AssessmentSubmission::where('user_id', $user->id)
-                        ->where('assessment_id', $module->assessment->id)
-                        ->orderBy('attempt_number', 'desc')
-                        ->first();
+                    $submissions = $submissionsByAssessment->get($module->assessment->id);
+                    $latestSubmission = $submissions ? $submissions->first() : null;
 
                     if ($canAccess && $latestSubmission) {
                         $recentGrades[] = [

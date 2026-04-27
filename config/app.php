@@ -39,7 +39,7 @@ return [
     |
     */
 
-    'debug' => (bool) env('APP_DEBUG', false),
+    'debug' => (bool) env('APP_DEBUG', false) && env('APP_ENV') !== 'production',
 
     /*
     |--------------------------------------------------------------------------
@@ -54,7 +54,7 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
-    'force_https' => (bool) env('FORCE_HTTPS', false),
+    'force_https' => (bool) env('FORCE_HTTPS', env('APP_ENV') === 'production'),
 
     /*
     |--------------------------------------------------------------------------

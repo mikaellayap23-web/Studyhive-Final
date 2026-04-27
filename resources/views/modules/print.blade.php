@@ -3,257 +3,173 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $module->title }} - Module Summary - Studyhive</title>
+    <title>Print Summary - {{ $module->title }} - Studyhive</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ asset('css/sidebar.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/modules.css') }}">
     <style>
-        :root {
-            primary: #3b82f6;
-            text: #1e293b;
-            gray: #64748b;
-            border: #e2e8f0;
-            success: #16a34a;
-            warning: #f59e0b;
+        @media print {
+            .no-print { display: none; }
+            .print-only { display: block !important; }
         }
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            line-height: 1.6;
-            color: #1e293b;
-            background: white;
-            padding: 2rem;
-            max-width: 900px;
+        .print-container {
+            max-width: 800px;
             margin: 0 auto;
+            padding: 2rem;
+            background: white;
         }
-        .header {
+        .print-header {
             text-align: center;
             margin-bottom: 2rem;
-            padding-bottom: 1.5rem;
-            border-bottom: 3px solid #3b82f6;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e2e8e4;
         }
-        .header h1 {
-            font-size: 1.75rem;
-            font-weight: 700;
+        .print-header h1 {
+            color: #2d5a3d;
             margin-bottom: 0.5rem;
         }
-        .header p {
-            color: #64748b;
+        .print-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1rem;
             font-size: 0.875rem;
+            color: #718096;
         }
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1.5rem;
-            margin-bottom: 2rem;
+        .print-section {
+            margin-bottom: 1.5rem;
         }
-        .info-card {
-            padding: 1rem;
-            border: 1px solid #e2e8e0;
-            border-radius: 8px;
-        }
-        .info-card h3 {
-            font-size: 0.875rem;
-            color: #64748b;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 0.5rem;
-        }
-        .info-card p {
-            font-size: 1rem;
-            color: #1e293b;
-        }
-        .section {
-            margin-bottom: 2rem;
-        }
-        .section h2 {
+        .print-section h2 {
             font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
+            color: #2d3748;
+            margin-bottom: 0.75rem;
             padding-bottom: 0.5rem;
-            border-bottom: 2px solid #e2e8e0;
+            border-bottom: 1px solid #e2e8e4;
         }
-        .progress-bar {
-            height: 12px;
-            background: #e2e8e0;
-            border-radius: 6px;
-            overflow: hidden;
-            margin: 1rem 0;
+        .print-field {
+            margin-bottom: 0.75rem;
         }
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #3b82f6, #10b981);
-            transition: width 0.3s;
+        .print-label {
+            font-weight: 600;
+            color: #4a5568;
+            display: inline-block;
+            width: 180px;
+        }
+        .print-value {
+            color: #2d3748;
+        }
+        .print-footer {
+            margin-top: 3rem;
+            text-align: center;
+            font-size: 0.875rem;
+            color: #a0aec0;
         }
         .status-badge {
             display: inline-block;
-            padding: 0.375rem 0.75rem;
+            padding: 0.25rem 0.75rem;
             border-radius: 9999px;
-            font-size: 0.75rem;
+            font-size: 0.875rem;
             font-weight: 600;
-            text-transform: uppercase;
         }
-        .status-published { background: #dcfce7; color: #166534; }
-        .status-draft { background: #fef3c7; color: #92400e; }
-        .status-completed { background: #d1fae5; color: #065f46; }
-        .status-incomplete { background: #fee2e2; color: #991b1b; }
-        .print-actions {
-            position: fixed;
-            top: 1rem;
-            right: 1rem;
-            display: flex;
-            gap: 0.5rem;
-        }
-        .btn {
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 0.875rem;
-            cursor: pointer;
-            border: none;
-        }
-        .btn-primary {
-            background: #3b82f6;
-            color: white;
-        }
-        .btn-secondary {
-            background: #e2e8e0;
-            color: #1e293b;
-        }
-        .footer {
-            margin-top: 3rem;
-            padding-top: 1rem;
-            border-top: 1px solid #e2e8e0;
-            text-align: center;
-            font-size: 0.875rem;
-            color: #64748b;
-        }
-        @media print {
-            .print-actions {
-                display: none;
-            }
-            body {
-                padding: 0;
-            }
-            .info-card {
-                break-inside: avoid;
-            }
-            .section {
-                break-inside: avoid;
-            }
-        }
+        .status-published { background: #c6f6d5; color: #22543d; }
+        .status-draft { background: #feebc8; color: #744210; }
+        .status-completed { background: #c6f6d5; color: #22543d; }
+        .status-incomplete { background: #fed7d7; color: #742a2a; }
     </style>
 </head>
 <body>
-    <div class="print-actions">
-        <button onclick="window.print()" class="btn btn-primary">Print</button>
-        <a href="{{ url()->previous() }}" class="btn btn-secondary">Back</a>
-    </div>
-
-    <div class="header">
-        <h1>{{ $module->title }}</h1>
-        <p>Module Summary • Generated on {{ now()->format('F j, Y') }}</p>
-    </div>
-
-    <div class="info-grid">
-        <div class="info-card">
-            <h3>Status</h3>
-            <p>
-                @if($module->status === 'published')
-                    <span class="status-badge status-published">Published</span>
-                @else
-                    <span class="status-badge status-draft">Draft</span>
-                @endif
-            </p>
+    <div class="print-container">
+        <div class="print-header">
+            <h1>Module Summary</h1>
+            <p>{{ $module->title }}</p>
+            <div class="print-meta">
+                <span>Generated: {{ now()->format('F j, Y g:i A') }}</span>
+                <span>Student: {{ auth()->user()->first_name }} {{ auth()->user()->last_name }}</span>
+            </div>
         </div>
-        <div class="info-card">
-            <h3>Created By</h3>
-            <p>{{ $module->user->first_name }} {{ $module->user->last_name }}</p>
-        </div>
-        @if($module->assignedTeacher)
-        <div class="info-card">
-            <h3>Assigned Teacher</h3>
-            <p>{{ $module->assignedTeacher->first_name }} {{ $module->assignedTeacher->last_name }}</p>
-        </div>
-        @endif
-        <div class="info-card">
-            <h3>Order</h3>
-            <p>{{ $module->order }}</p>
-        </div>
-        <div class="info-card">
-            <h3>Created Date</h3>
-            <p>{{ $module->created_at->format('F j, Y') }}</p>
-        </div>
-        <div class="info-card">
-            <h3>Your Progress</h3>
-            <p>
-                @if($enrollment)
-                    @if($progress && $progress->progress >= 100)
-                        <span class="status-badge status-completed">Completed ({{ $progress->progress }}%)</span>
-                    @else
-                        <span class="status-badge status-incomplete">{{ $progress ? $progress->progress : 0 }}% Complete</span>
-                    @endif
-                @else
-                    <span style="color: #64748b;">Not Enrolled</span>
-                @endif
-            </p>
-        </div>
-    </div>
 
-    <div class="section">
-        <h2>Description</h2>
-        <p>{{ $module->description ?? 'No description available.' }}</p>
-    </div>
-
-    @if($module->content)
-    <div class="section">
-        <h2>Learning Content</h2>
-        <p>{{ $module->content }}</p>
-    </div>
-    @endif
-
-    @if($module->file_path)
-    <div class="section">
-        <h2>Module Materials</h2>
-        <p>📄 {{ basename($module->file_path) }}</p>
-    </div>
-    @endif
-
-    @if($module->assessment)
-    <div class="section">
-        <h2>Assessment Information</h2>
-        <p><strong>Title:</strong> {{ $module->assessment->title }}</p>
-        @if($module->assessment->description)
-            <p><strong>Description:</strong> {{ $module->assessment->description }}</p>
-        @endif
-        <p><strong>Duration:</strong> {{ $module->assessment->duration_minutes }} minutes</p>
-        <p><strong>Passing Score:</strong> {{ $module->assessment->passing_score }}%</p>
-        <p><strong>Questions:</strong> {{ count($module->assessment->questions) }}</p>
-        <p><strong>Max Attempts:</strong> {{ $module->assessment->max_attempts }}</p>
-        
-        @if($enrollment)
-            @php
-                $submission = $module->assessment->submissions->first();
-            @endphp
-            @if($submission)
-                <div style="margin-top: 1rem; padding: 1rem; background: #f8fafc; border-radius: 8px;">
-                    <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">Your Submission</h3>
-                    <p><strong>Score:</strong> {{ number_format($submission->percentage, 1) }}% ({{ $submission->status }})</p>
-                    <p><strong>Attempt:</strong> {{ $submission->attempt_number }}</p>
-                    <p><strong>Date:</strong> {{ $submission->submitted_at->format('F j, Y g:i A') }}</p>
-                </div>
+        <div class="print-section">
+            <h2>Module Details</h2>
+            <div class="print-field">
+                <span class="print-label">Title:</span>
+                <span class="print-value">{{ $module->title }}</span>
+            </div>
+            <div class="print-field">
+                <span class="print-label">Description:</span>
+                <span class="print-value">{{ $module->description ?? 'N/A' }}</span>
+            </div>
+            <div class="print-field">
+                <span class="print-label">Status:</span>
+                <span class="status-badge status-{{ $module->status }}">{{ ucfirst($module->status) }}</span>
+            </div>
+            <div class="print-field">
+                <span class="print-label">Created By:</span>
+                <span class="print-value">{{ $module->user->first_name }} {{ $module->user->last_name }}</span>
+            </div>
+            @if($module->assignedTeacher)
+            <div class="print-field">
+                <span class="print-label">Assigned Teacher:</span>
+                <span class="print-value">{{ $module->assignedTeacher->first_name }} {{ $module->assignedTeacher->last_name }}</span>
+            </div>
             @endif
-        @endif
-    </div>
-    @endif
+            <div class="print-field">
+                <span class="print-label">Order:</span>
+                <span class="print-value">{{ $module->order }}</span>
+            </div>
+        </div>
 
-    <div class="footer">
-        <p>This document was generated by Studyhive LMS • TESDA CSS NC II</p>
+        @if($enrollment)
+        <div class="print-section">
+            <h2>Enrollment Information</h2>
+            <div class="print-field">
+                <span class="print-label">Enrolled On:</span>
+                <span class="print-value">{{ $enrollment->created_at->format('F j, Y') }}</span>
+            </div>
+            @if($progress)
+            <div class="print-field">
+                <span class="print-label">Progress:</span>
+                <span class="print-value">{{ $progress->progress }}%</span>
+            </div>
+            <div class="print-field">
+                <span class="print-label">PDF Completion:</span>
+                <span class="print-value">{{ $progress->pdf_completed ? 'Completed' : 'Incomplete' }}</span>
+            </div>
+            @endif
+        </div>
+        @endif
+
+        @if($module->assessment)
+        <div class="print-section">
+            <h2>Assessment</h2>
+            <div class="print-field">
+                <span class="print-label">Title:</span>
+                <span class="print-value">{{ $module->assessment->title }}</span>
+            </div>
+            <div class="print-field">
+                <span class="print-label">Duration:</span>
+                <span class="print-value">{{ $module->assessment->duration_minutes }} minutes</span>
+            </div>
+            <div class="print-field">
+                <span class="print-label">Passing Score:</span>
+                <span class="print-value">{{ $module->assessment->passing_score }}%</span>
+            </div>
+        </div>
+        @endif
+
+        <div class="print-footer no-print">
+            <p>This document was generated from Studyhive &copy; {{ date('Y') }}</p>
+        </div>
+
+        <div class="print-footer print-only">
+            <p>Generated on {{ now()->toDateTimeString() }}</p>
+        </div>
     </div>
+
+    <script>
+        // Auto-print when page loads
+        window.onload = function() {
+            window.print();
+        };
+    </script>
 </body>
 </html>

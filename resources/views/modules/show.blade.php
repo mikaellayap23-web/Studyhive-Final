@@ -9,38 +9,41 @@
     <link rel="stylesheet" href="{{ asset('css/sidebar.css') }}">
     <link rel="stylesheet" href="{{ asset('css/modules.css') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-    <style>
-        .module-detail {
-            max-width: 900px;
-            margin: 0 auto;
-        }
-        .module-detail-header {
-            background: white;
-            border: 1px solid #e2e8e4;
-            border-radius: 8px;
-            padding: 2rem;
-            margin-bottom: 1.5rem;
-        }
-        .module-detail-title {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: #2d3748;
-            margin-bottom: 1rem;
-        }
-        .module-detail-meta {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-        .module-detail-body {
-            background: white;
-            border: 1px solid #e2e8e4;
-            border-radius: 8px;
-            padding: 2rem;
-            margin-bottom: 1.5rem;
-        }
+     <style>
+         .module-detail {
+             max-width: 900px;
+             margin: 0 auto;
+             padding: 0 1rem;
+         }
+         .module-detail-header {
+             background: white;
+             border: 1px solid #e2e8e4;
+             border-radius: 8px;
+             padding: 2rem;
+             margin-bottom: 1.5rem;
+         }
+         .module-detail-title {
+             font-size: 1.75rem;
+             font-weight: 700;
+             color: #2d3748;
+             margin-bottom: 1rem;
+         }
+         .module-detail-meta {
+             display: flex;
+             flex-wrap: wrap;
+             gap: 1rem;
+             align-items: center;
+             margin-bottom: 1.5rem;
+         }
+         .module-detail-body {
+             background: white;
+             border: 1px solid #e2e8e4;
+             border-radius: 8px;
+             padding: 2rem;
+             margin-bottom: 1.5rem;
+             max-width: 100%;
+             overflow-wrap: break-word;
+         }
         .module-detail-section {
             margin-bottom: 2rem;
         }
@@ -326,28 +329,28 @@
                          </div>
                      </div>
 
-                     @if($module->prerequisite)
-                         <div class="module-detail-body" style="background: #fef3c7; border-color: #fcd34d;">
-                             <div class="module-detail-section">
-                                 <h3 style="color: #92400e; display: flex; align-items: center; gap: 0.5rem;">
-                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                         <circle cx="12" cy="12" r="10"/>
-                                         <line x1="12" y1="8" x2="12" y2="12"/>
-                                         <line x1="12" y1="16" x2="12.01" y2="16"/>
-                                     </svg>
-                                     Prerequisite Required
-                                 </h3>
-                                 <p style="color: #78350f;">
-                                     You must complete <strong>{{ $module->prerequisite->title }}</strong> before you can enroll in this module.
-                                     @if($isEnrolled)
-                                         <span style="display: block; margin-top: 0.5rem; color: #b45309;">
-                                             ⚠️ You are enrolled but missing the prerequisite. Contact your instructor if you believe this is an error.
-                                         </span>
-                                     @endif
-                                 </p>
-                             </div>
-                         </div>
-                     @endif
+                       @if($module->prerequisite && !$prerequisiteMet)
+                           <div class="module-detail-body" style="background: #fef3c7; border-color: #fcd34d; max-width: 100%; overflow-wrap: break-word;">
+                               <div class="module-detail-section">
+                                  <h3 style="color: #92400e; display: flex; align-items: center; gap: 0.5rem;">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                          <circle cx="12" cy="12" r="10"/>
+                                          <line x1="12" y1="8" x2="12" y2="12"/>
+                                          <line x1="12" y1="16" x2="12.01" y2="16"/>
+                                      </svg>
+                                      Prerequisite Required
+                                  </h3>
+                                  <p style="color: #78350f;">
+                                      You must complete <strong>{{ $module->prerequisite->title }}</strong> before you can enroll in this module.
+                                      @if($isEnrolled)
+                                          <span style="display: block; margin-top: 0.5rem; color: #b45309;">
+                                              ⚠️ You are enrolled but missing the prerequisite. Contact your instructor if you believe this is an error.
+                                          </span>
+                                      @endif
+                                  </p>
+                              </div>
+                          </div>
+                      @endif
 
                      @if(auth()->user()->role === 'student' && !$isEnrolled)
                                     <p style="color: #718096; font-size: 0.875rem;">
@@ -648,7 +651,7 @@
 
         // Load PDF
         if (elements.pagesContainer) {
-            const pdfUrl = '{{ asset('storage/' . $module->file_path) }}';
+            const pdfUrl = '{{ route('modules.file', $module->id) }}';
             console.log('Loading PDF from URL:', pdfUrl);
             
             pdfjsLib.getDocument(pdfUrl).promise

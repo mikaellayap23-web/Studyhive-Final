@@ -21,45 +21,26 @@ class ModuleController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        if ($user->role === 'admin') {
-            // Admin sees all non-trashed modules
-            $query = Module::withoutTrashed()->with(['user', 'assignedTeacher']);
+        $baseQuery = Module::withoutTrashed()->with(['user', 'assignedTeacher']);
 
-            // Apply filters
-            if ($request->filled('search')) {
-                $query->where('title', 'like', "%{$request->search}%");
-            }
-            if ($request->filled('teacher')) {
-                $query->where('assigned_teacher_id', $request->teacher);
-            }
-            if ($request->filled('status')) {
-                $query->where('status', $request->status);
-            }
-
-            $modules = $query->orderBy('order')->orderBy('created_at', 'desc')->get();
-        } elseif ($user->role === 'teacher') {
-            // Teacher sees all non-trashed modules
-            $query = Module::withoutTrashed()->with(['user', 'assignedTeacher']);
-
-            // Apply filters
-            if ($request->filled('search')) {
-                $query->where('title', 'like', "%{$request->search}%");
-            }
-            if ($request->filled('status')) {
-                $query->where('status', $request->status);
-            }
-
-            $modules = $query->orderBy('order')->orderBy('created_at', 'desc')->get();
-        } else {
-            // Student sees only published non-trashed modules
-            $query = Module::withoutTrashed()->with(['user', 'assignedTeacher'])->where('status', 'published');
-
-            if ($request->filled('search')) {
-                $query->where('title', 'like', "%{$request->search}%");
-            }
-
-            $modules = $query->orderBy('order')->orderBy('created_at', 'desc')->get();
+        // Apply role-based filters
+        if ($user->role === 'student') {
+            $baseQuery->where('status', 'published');
         }
+        // Teachers and admins see all modules (subject to other filters)
+
+        // Apply filters
+        if ($request->filled('search')) {
+            $baseQuery->where('title', 'like', "%{$request->search}%");
+        }
+        if ($request->filled('teacher')) {
+            $baseQuery->where('assigned_teacher_id', $request->teacher);
+        }
+        if ($request->filled('status')) {
+            $baseQuery->where('status', $request->status);
+        }
+
+        $modules = $baseQuery->orderBy('order')->orderBy('created_at', 'desc')->get();
 
         return view('modules.index', compact('modules'));
     }
@@ -75,25 +56,42 @@ class ModuleController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
+        $baseQuery = Module::withoutTrashed()
+            ->with(['user', 'assignedTeacher']);
+
+        // Apply role-based filters
         if ($user->role === 'student') {
-            // Get all published modules that are NOT trashed
-            $query = Module::withoutTrashed()
-                ->with(['user', 'assignedTeacher', 'assessment.submissions' => function ($q) use ($user) {
+            $baseQuery->where('status', 'published')
+                ->with(['assessment.submissions' => function ($q) use ($user) {
                     $q->where('user_id', $user->id);
-                }])
-                ->where('status', 'published')
-                ->orderBy('order')
-                ->orderBy('created_at', 'desc');
+                }]);
+        }
+        // Teachers see all modules (view-only unless assigned/created) - no additional filter needed here
+        // Admins see all modules - no additional filter needed
 
-            if ($request->filled('search')) {
-                $query->where('title', 'like', "%{$request->search}%");
-            }
-            if ($request->filled('teacher')) {
-                $query->where('assigned_teacher_id', $request->teacher);
-            }
+        // Apply filters
+        if ($request->filled('search')) {
+            $baseQuery->where('title', 'like', "%{$request->search}%");
+        }
+        if ($request->filled('teacher')) {
+            $baseQuery->where('assigned_teacher_id', $request->teacher);
+        }
+        if ($request->filled('status') && $user->role !== 'student') { // Students only see published anyway
+            $baseQuery->where('status', $request->status);
+        }
 
-            $modules = $query->get();
+        // Special handling for teacher role - only show assigned/created modules
+        if ($user->role === 'teacher') {
+            $baseQuery->where(function ($q) use ($user) {
+                $q->where('assigned_teacher_id', $user->id)
+                    ->orWhere('user_id', $user->id);
+            });
+        }
 
+        $modules = $baseQuery->orderBy('order')->orderBy('created_at', 'desc')->get();
+
+        // Process student-specific data
+        if ($user->role === 'student') {
             $moduleIds = $modules->pluck('id');
             $enrolledModuleIds = Enrollment::where('user_id', $user->id)
                 ->whereIn('module_id', $moduleIds)
@@ -117,34 +115,6 @@ class ModuleController extends Controller
                 }
                 $module->is_completed = $progressComplete && $assessmentPassed;
             });
-        } elseif ($user->role === 'teacher') {
-            // Teacher sees ALL modules (view-only unless assigned/created)
-            $query = Module::withoutTrashed()
-                ->with(['user', 'assignedTeacher']);
-
-            if ($request->filled('search')) {
-                $query->where('title', 'like', "%{$request->search}%");
-            }
-            if ($request->filled('status')) {
-                $query->where('status', $request->status);
-            }
-
-            $modules = $query->orderBy('order')->orderBy('created_at', 'desc')->get();
-        } else {
-            // Admin sees all modules with full control
-            $query = Module::withoutTrashed()->with(['user', 'assignedTeacher']);
-
-            if ($request->filled('search')) {
-                $query->where('title', 'like', "%{$request->search}%");
-            }
-            if ($request->filled('teacher')) {
-                $query->where('assigned_teacher_id', $request->teacher);
-            }
-            if ($request->filled('status')) {
-                $query->where('status', $request->status);
-            }
-
-            $modules = $query->orderBy('order')->orderBy('created_at', 'desc')->get();
         }
 
         return view('modules.all', compact('modules'));
@@ -161,55 +131,40 @@ class ModuleController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
+        $baseQuery = Module::withoutTrashed()->with(['user', 'assignedTeacher']);
+
+        // Apply role-based filters
         if ($user->role === 'admin') {
-            // Admin sees all non-trashed modules
-            $query = Module::withoutTrashed()->with(['user', 'assignedTeacher']);
-
-            if ($request->filled('search')) {
-                $query->where('title', 'like', "%{$request->search}%");
-            }
-            if ($request->filled('teacher')) {
-                $query->where('assigned_teacher_id', $request->teacher);
-            }
-            if ($request->filled('status')) {
-                $query->where('status', $request->status);
-            }
-
-            $modules = $query->orderBy('order')->orderBy('created_at', 'desc')->get();
+            // Admin sees all modules
         } elseif ($user->role === 'teacher') {
             // Teacher sees only modules they're assigned to or created
-            $query = Module::withoutTrashed()
-                ->with(['user', 'assignedTeacher'])
-                ->where(function ($q) use ($user) {
-                    $q->where('assigned_teacher_id', $user->id)
-                        ->orWhere('user_id', $user->id);
-                });
-
-            if ($request->filled('search')) {
-                $query->where('title', 'like', "%{$request->search}%");
-            }
-            if ($request->filled('status')) {
-                $query->where('status', $request->status);
-            }
-
-            $modules = $query->orderBy('order')->orderBy('created_at', 'desc')->get();
+            $baseQuery->where(function ($q) use ($user) {
+                $q->where('assigned_teacher_id', $user->id)
+                    ->orWhere('user_id', $user->id);
+            });
         } else {
             // Student sees modules they're enrolled in
-            $query = Module::withoutTrashed()
-                ->with(['user', 'assignedTeacher'])
-                ->where('status', 'published')
+            $baseQuery->where('status', 'published')
                 ->whereHas('enrollments', function ($query) use ($user) {
                     $query->where('user_id', $user->id);
-                })
-                ->orderBy('order')
-                ->orderBy('created_at', 'desc');
+                });
+        }
 
-            if ($request->filled('search')) {
-                $query->where('title', 'like', "%{$request->search}%");
-            }
+        // Apply filters
+        if ($request->filled('search')) {
+            $baseQuery->where('title', 'like', "%{$request->search}%");
+        }
+        if ($request->filled('teacher') && $user->role !== 'student') { // Students filter handled elsewhere
+            $baseQuery->where('assigned_teacher_id', $request->teacher);
+        }
+        if ($request->filled('status') && $user->role === 'admin') { // Only admin can filter by status in myModules
+            $baseQuery->where('status', $request->status);
+        }
 
-            $modules = $query->get();
+        $modules = $baseQuery->orderBy('order')->orderBy('created_at', 'desc')->get();
 
+        // Process student-specific data
+        if ($user->role === 'student') {
             $myModuleIds = $modules->pluck('id');
             $myProgressByModule = ModuleProgress::where('user_id', $user->id)
                 ->whereIn('module_id', $myModuleIds)
@@ -391,9 +346,14 @@ class ModuleController extends Controller
             // Handle file upload
             if ($request->hasFile('file')) {
                 if ($module->file_path) {
-                    Storage::disk('public')->delete($module->file_path);
+                    // Delete from whichever disk it exists (backwards compatibility)
+                    if (Storage::disk('local')->exists($module->file_path)) {
+                        Storage::disk('local')->delete($module->file_path);
+                    } elseif (Storage::disk('public')->exists($module->file_path)) {
+                        Storage::disk('public')->delete($module->file_path);
+                    }
                 }
-                $data['file_path'] = $request->file('file')->store('modules', 'public');
+                $data['file_path'] = $request->file('file')->store('modules', 'local');
             }
 
             $module->update($data);
@@ -463,9 +423,14 @@ class ModuleController extends Controller
         // Handle file upload
         if ($request->hasFile('file')) {
             if ($module->file_path) {
-                Storage::disk('public')->delete($module->file_path);
+                // Delete from whichever disk it exists (backwards compatibility)
+                if (Storage::disk('local')->exists($module->file_path)) {
+                    Storage::disk('local')->delete($module->file_path);
+                } elseif (Storage::disk('public')->exists($module->file_path)) {
+                    Storage::disk('public')->delete($module->file_path);
+                }
             }
-            $data['file_path'] = $request->file('file')->store('modules', 'public');
+            $data['file_path'] = $request->file('file')->store('modules', 'local');
         }
 
         $module->update($data);
@@ -508,10 +473,10 @@ class ModuleController extends Controller
             }
 
             // Duplicate file if exists
-            if ($module->file_path && Storage::disk('public')->exists($module->file_path)) {
+            if ($module->file_path && Storage::disk('local')->exists($module->file_path)) {
                 $ext = pathinfo($module->file_path, PATHINFO_EXTENSION);
                 $newFilePath = 'modules/'.uniqid().'_'.time().'.'.$ext;
-                Storage::disk('public')->copy($module->file_path, $newFilePath);
+                Storage::disk('local')->copy($module->file_path, $newFilePath);
                 $newModule->file_path = $newFilePath;
                 $newModule->save();
             }
@@ -608,9 +573,13 @@ class ModuleController extends Controller
 
         $module = Module::onlyTrashed()->findOrFail($id);
 
-        // Delete physical files permanently
+        // Delete physical files permanently (check both local and public disks for backwards compatibility)
         if ($module->file_path) {
-            Storage::disk('public')->delete($module->file_path);
+            if (Storage::disk('local')->exists($module->file_path)) {
+                Storage::disk('local')->delete($module->file_path);
+            } elseif (Storage::disk('public')->exists($module->file_path)) {
+                Storage::disk('public')->delete($module->file_path);
+            }
         }
         if ($module->image_path) {
             Storage::disk('public')->delete($module->image_path);
@@ -674,9 +643,13 @@ class ModuleController extends Controller
         $count = 0;
 
         foreach ($modules as $module) {
-            // Delete files
+            // Delete files (check both disks for backwards compatibility)
             if ($module->file_path) {
-                Storage::disk('public')->delete($module->file_path);
+                if (Storage::disk('local')->exists($module->file_path)) {
+                    Storage::disk('local')->delete($module->file_path);
+                } elseif (Storage::disk('public')->exists($module->file_path)) {
+                    Storage::disk('public')->delete($module->file_path);
+                }
             }
             if ($module->image_path) {
                 Storage::disk('public')->delete($module->image_path);
@@ -794,14 +767,16 @@ class ModuleController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        // Load assessment relationship
-        $module->load('assessment');
+        // Load assessment relationship, creator/teacher, AND prerequisite to avoid N+1
+        $module->load(['assessment', 'user', 'assignedTeacher', 'prerequisite']);
 
         // Check if student is enrolled
         $isEnrolled = false;
         $enrollment = null;
         $moduleProgress = null;
         $moduleCompleted = false;
+        $prerequisiteMet = true; // Default to true if no prerequisite
+
         if ($user->role === 'student') {
             $enrollment = Enrollment::where('user_id', $user->id)
                 ->where('module_id', $module->id)
@@ -825,6 +800,25 @@ class ModuleController extends Controller
                 }
                 $moduleCompleted = $progressComplete && $assessmentPassed;
             }
+
+            // Check if prerequisite is met (if module has a prerequisite)
+            if ($module->prerequisite) {
+                $prerequisiteProgress = ModuleProgress::where('user_id', $user->id)
+                    ->where('module_id', $module->prerequisite_module_id)
+                    ->first();
+
+                $prerequisiteCompleted = $prerequisiteProgress && $prerequisiteProgress->progress >= 100;
+
+                // Also check assessment if prerequisite module has one
+                if ($prerequisiteCompleted && $module->prerequisite->assessment) {
+                    $prerequisiteCompleted = $module->prerequisite->assessment->submissions()
+                        ->where('user_id', $user->id)
+                        ->where('status', 'passed')
+                        ->exists();
+                }
+
+                $prerequisiteMet = $prerequisiteCompleted;
+            }
         }
 
         // Students can only view published modules
@@ -832,7 +826,7 @@ class ModuleController extends Controller
             abort(403);
         }
 
-        return view('modules.show', compact('module', 'isEnrolled', 'enrollment', 'moduleProgress', 'moduleCompleted'));
+        return view('modules.show', compact('module', 'isEnrolled', 'enrollment', 'moduleProgress', 'moduleCompleted', 'prerequisiteMet'));
     }
 
     /**
@@ -868,5 +862,53 @@ class ModuleController extends Controller
         }
 
         return view('modules.print', compact('module', 'enrollment', 'progress'));
+    }
+
+    /**
+     * Serve protected module file (PDF) to authorized users.
+     */
+    public function serveFile(Module $module)
+    {
+        $user = Auth::user();
+
+        // Admins can access any file
+        if ($user->role === 'admin') {
+            // authorized
+        } elseif ($user->role === 'teacher') {
+            // Teachers can access if assigned to this module or they created it
+            if ($module->assigned_teacher_id !== $user->id && $module->user_id !== $user->id) {
+                abort(403, 'You do not have permission to access this file.');
+            }
+        } elseif ($user->role === 'student') {
+            // Students must be enrolled to access file
+            $enrolled = Enrollment::where('user_id', $user->id)
+                ->where('module_id', $module->id)
+                ->exists();
+            if (! $enrolled) {
+                abort(403, 'You must be enrolled in this module to access the file.');
+            }
+        } else {
+            abort(403);
+        }
+
+        if (! $module->file_path) {
+            abort(404, 'File not found.');
+        }
+
+        // Determine which disk contains the file (support both legacy public and new local storage)
+        $filePath = $module->file_path;
+        $exists = Storage::disk('local')->exists($filePath);
+        $disk = 'local';
+
+        if (! $exists) {
+            $exists = Storage::disk('public')->exists($filePath);
+            $disk = 'public';
+        }
+
+        if (! $exists) {
+            abort(404, 'File not found.');
+        }
+
+        return Storage::disk($disk)->response($filePath);
     }
 }

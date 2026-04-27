@@ -25,6 +25,9 @@ return new class extends Migration
             $table->foreignId('prerequisite_module_id')->nullable()->constrained('modules')->onDelete('set null');
             $table->timestamps();
             $table->softDeletes();
+
+            // Index for filtering by status
+            $table->index('status');
         });
     }
 

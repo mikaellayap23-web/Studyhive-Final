@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Assessment;
 use App\Models\AssessmentSubmission;
 use App\Models\Module;
+use App\Models\ModuleProgress;
 use App\Models\User;
 use App\Services\GradeService;
 use Illuminate\Http\Request;
@@ -217,6 +218,14 @@ class AssessmentController extends Controller
 
         if (! $isEnrolled) {
             abort(403, 'You must be enrolled in this module to take the assessment.');
+        }
+
+        // Check if module is completed (progress 100%)
+        $progress = ModuleProgress::where('user_id', $user->id)
+            ->where('module_id', $assessment->module_id)
+            ->first();
+        if (! $progress || $progress->progress < 100) {
+            abort(403, 'You must complete the module materials (100% progress) before attempting the assessment.');
         }
 
         // Check if student has attempts remaining

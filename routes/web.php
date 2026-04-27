@@ -70,23 +70,20 @@ Route::middleware(['auth', 'admin'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/modules/all', [ModuleController::class, 'allModules'])->name('modules.all');
     Route::get('/modules/my', [ModuleController::class, 'myModules'])->name('modules.my');
-    Route::post('/modules/{module}/enroll', [EnrollmentController::class, 'enroll'])->name('modules.enroll');
+    Route::post('/modules/{module}/enroll', [EnrollmentController::class, 'enroll'])->name('modules.enroll')->middleware('throttle:10,1');
     Route::delete('/modules/{module}/unenroll', [EnrollmentController::class, 'unenroll'])->name('modules.unenroll');
 });
+
+// Protected file download for enrolled students/instructors
+Route::get('/modules/{module}/file', [ModuleController::class, 'serveFile'])->name('modules.file')->middleware('auth');
 
 // Single module view (must be last to avoid catching other routes)
 Route::get('/modules/{module}', [ModuleController::class, 'show'])->name('modules.show')->middleware('auth');
 
 // Module Progress Tracking Routes (AJAX)
 Route::middleware(['auth'])->group(function () {
-    Route::post('/modules/{module}/progress/pdf', [ModuleProgressController::class, 'trackPdfPage'])->name('modules.progress.pdf');
+    Route::post('/modules/{module}/progress/pdf', [ModuleProgressController::class, 'trackPdfPage'])->name('modules.progress.pdf')->middleware('throttle:60,1');
     Route::get('/modules/{module}/progress', [ModuleProgressController::class, 'getProgress'])->name('modules.progress');
-});
-
-// Print Routes (Printable versions)
-Route::middleware(['auth'])->group(function () {
-    Route::get('/modules/{module}/print', [ModuleController::class, 'print'])->name('modules.print');
-    Route::get('/assessments/submissions/{submission}/print', [AssessmentController::class, 'printResults'])->name('assessments.results.print');
 });
 
 // Assessment Routes
@@ -101,9 +98,8 @@ Route::middleware(['auth'])->group(function () {
 
     // Student assessment routes (must be after CRUD routes)
     Route::get('/assessments/{assessment}/take', [AssessmentController::class, 'take'])->name('assessments.take');
-    Route::post('/assessments/{assessment}/submit', [AssessmentController::class, 'submit'])->name('assessments.submit');
+    Route::post('/assessments/{assessment}/submit', [AssessmentController::class, 'submit'])->name('assessments.submit')->middleware('throttle:10,1');
     Route::get('/assessments/submissions/{submission}', [AssessmentController::class, 'results'])->name('assessments.results');
-    Route::get('/assessments/submissions/{submission}/print', [AssessmentController::class, 'printResults'])->name('assessments.results.print');
     Route::get('/assessments/{assessment}/submissions', [AssessmentController::class, 'submissions'])->name('assessments.submissions');
 });
 
